@@ -1,0 +1,397 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Project-Id-Version: Razorpay Gateway for WooCommerce\n"
+"POT-Creation-Date: 2020-01-30 14:58+0530\n"
+"PO-Revision-Date: 2020-01-25 23:09+0530\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-Flags-xgettext: --add-comments=translators:\n"
+"X-Poedit-WPHeader: rzp-woocommerce.php\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
+
+#: includes/donate.php:28
+msgid ""
+"Hey, I noticed you've been using Razorpay Gateway for WooCommerce for more "
+"than 2 week – that’s awesome! If you like Razorpay Gateway for WooCommerce "
+"and you are satisfied with the plugin, isn’t that worth a coffee or two? "
+"Please consider donating. Donations help me to continue support and "
+"development of this free plugin! Thank you very much!"
+msgstr ""
+
+#: includes/donate.php:29
+msgid "Donate Now"
+msgstr ""
+
+#: includes/donate.php:30
+msgid "I already donated"
+msgstr ""
+
+#: includes/donate.php:31 includes/notice.php:31
+msgid "Nope&#44; maybe later"
+msgstr ""
+
+#: includes/donate.php:32
+msgid "I don't want to donate"
+msgstr ""
+
+#: includes/notice.php:28
+msgid ""
+"Hey, I noticed you've been using Razorpay Gateway for WooCommerce for more "
+"than 1 week – that’s awesome! Could you please do me a BIG favor and give it "
+"a <strong>5-star</strong> rating on WordPress? Just to help me spread the "
+"word and boost my motivation."
+msgstr ""
+
+#: includes/notice.php:29
+msgid "Ok, you deserve it"
+msgstr ""
+
+#: includes/notice.php:30
+msgid "I already did"
+msgstr ""
+
+#: includes/notice.php:32
+msgid "I don't want to rate"
+msgstr ""
+
+#: includes/payment.php:53
+msgid "Razorpay Payment Gateway"
+msgstr ""
+
+#: includes/payment.php:54
+msgid ""
+"Allow customers to securely pay via Razorpay Payment Links using Credit/"
+"Debit Cards, NetBanking, UPI, Wallets, QR Codes."
+msgstr ""
+
+#: includes/payment.php:55
+msgid "Proceed to Payment"
+msgstr ""
+
+#: includes/payment.php:83
+msgid "(Test Mode)"
+msgstr ""
+
+#. translators: %s: Link to Razorpay testing guide page
+#: includes/payment.php:85
+#, php-format
+msgid ""
+"TESTING MODE ENABLED. You can use Razorpay testing accounts only. See the <a "
+"href=\"%s\" target=\"_blank\">Razorpay Testing Guide</a> for more details."
+msgstr ""
+
+#: includes/payment.php:177
+msgid "Gateway disabled"
+msgstr ""
+
+#: includes/payment.php:177
+#, php-format
+msgid ""
+"Razorpay does not support your store currency. Please check the supported "
+"currency list from <a href=\"%s\" target=\"_blank\">here</a>."
+msgstr ""
+
+#: includes/payment.php:190
+msgid "Enable/Disable:"
+msgstr ""
+
+#: includes/payment.php:191
+msgid "Enable Razorpay Gateway"
+msgstr ""
+
+#: includes/payment.php:193
+msgid "Enable Razorpay Payment Gateway for this website."
+msgstr ""
+
+#: includes/payment.php:198
+msgid "Title:"
+msgstr ""
+
+#: includes/payment.php:200
+msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: includes/payment.php:201
+msgid "Pay with Razorpay"
+msgstr ""
+
+#: includes/payment.php:205
+msgid "Description:"
+msgstr ""
+
+#: includes/payment.php:207
+msgid "This controls the description which the user sees during checkout."
+msgstr ""
+
+#: includes/payment.php:209
+msgid ""
+"Pay securely by Credit or Debit card or Internet Banking or UPI or QR Code "
+"or Wallets through Razorpay."
+msgstr ""
+
+#: includes/payment.php:212
+msgid "Thank You Message:"
+msgstr ""
+
+#: includes/payment.php:214
+msgid "This displays a message to customer after a successful payment is made."
+msgstr ""
+
+#: includes/payment.php:216
+msgid ""
+"Thank you for your payment. Your transaction has been completed, and your "
+"order has been successfully placed. Please check you Email inbox for "
+"details. You can view your bank account to view transaction details."
+msgstr ""
+
+#: includes/payment.php:219
+msgid "API Credentials"
+msgstr ""
+
+#: includes/payment.php:224
+msgid "Live Client API Key:"
+msgstr ""
+
+#: includes/payment.php:226
+msgid ""
+"The key Id and key secret can be generated from \"API Keys\" section of "
+"Razorpay Dashboard. Use live key for live mode."
+msgstr ""
+
+#: includes/payment.php:230
+msgid "Live Client Secret Key:"
+msgstr ""
+
+#: includes/payment.php:232
+msgid ""
+"The key Id and key secret can be generated from \"API Keys\" section of "
+"Razorpay Dashboard. Use live secret for live mode."
+msgstr ""
+
+#: includes/payment.php:236
+msgid "Test Mode:"
+msgstr ""
+
+#: includes/payment.php:237
+msgid "Enable Test Mode"
+msgstr ""
+
+#: includes/payment.php:239
+msgid "Run the Razorpay Payment Gateway in test mode."
+msgstr ""
+
+#: includes/payment.php:244
+msgid "Test Client API Key:"
+msgstr ""
+
+#: includes/payment.php:246
+msgid ""
+"The key Id and key secret can be generated from \"API Keys\" section of "
+"Razorpay Dashboard. Use test key for test mode."
+msgstr ""
+
+#: includes/payment.php:250
+msgid "Test Client Secret Key:"
+msgstr ""
+
+#: includes/payment.php:252
+msgid ""
+"The key Id and key secret can be generated from \"API Keys\" section of "
+"Razorpay Dashboard. Use test secret for test mode."
+msgstr ""
+
+#: includes/payment.php:256
+msgid "Razorpay Settings"
+msgstr ""
+
+#: includes/payment.php:261
+msgid "SMS Notification:"
+msgstr ""
+
+#: includes/payment.php:262 includes/payment.php:270 includes/payment.php:278
+#: includes/payment.php:286 includes/payment.php:302
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/payment.php:264
+msgid ""
+"Enable this option to send payment links to your customer's Mobile Number as "
+"a SMS."
+msgstr ""
+
+#: includes/payment.php:269
+msgid "Email Notification:"
+msgstr ""
+
+#: includes/payment.php:272
+msgid ""
+"Enable this option to send payment links to your customer's Email Address as "
+"a Email."
+msgstr ""
+
+#: includes/payment.php:277
+msgid "Payment Reminder:"
+msgstr ""
+
+#: includes/payment.php:280
+msgid ""
+"Enable this option to send payment reminder alerts to your customers if they "
+"do not completed their payment yet. It only works when you will enable "
+"Payment Reminder from your Razorpay Account."
+msgstr ""
+
+#: includes/payment.php:285
+msgid "Payment Link Auto Expire:"
+msgstr ""
+
+#: includes/payment.php:288
+msgid ""
+"Enable this option to auto expire payment links depending on hold stock "
+"duration. It will work only when Stock Management is enabled in WooCommerce "
+"Settings."
+msgstr ""
+
+#: includes/payment.php:293
+msgid "Payment Gateway Fees:"
+msgstr ""
+
+#: includes/payment.php:294
+msgid "Collect Razorpay Gateway Fees from Customer"
+msgstr ""
+
+#: includes/payment.php:296
+msgid ""
+"Enable this option to collect the Razorpay Gateway Fee from your customers "
+"for the payments they make."
+msgstr ""
+
+#: includes/payment.php:301
+msgid "Debug Mode:"
+msgstr ""
+
+#: includes/payment.php:304
+msgid ""
+"Enable this option to view the detailed communication between the Gateway "
+"API and WooCommerce in a WooCommerce log file."
+msgstr ""
+
+#: includes/payment.php:339
+msgid "Order ID: "
+msgstr ""
+
+#: includes/payment.php:393
+msgid ""
+"Error Occured! Please contact with Site Administrator to resolve this issue."
+msgstr ""
+
+#: includes/payment.php:414
+msgid "Payment is Pending against this order. URL: "
+msgstr ""
+
+#: includes/payment.php:427
+msgid "Error Occured: "
+msgstr ""
+
+#: includes/payment.php:489
+msgid "Refund failed."
+msgstr ""
+
+#: includes/payment.php:504
+msgid "No reason specified!"
+msgstr ""
+
+#. translators: %s: Razorpay gateway error message
+#: includes/payment.php:532
+#, php-format
+msgid "Refund could not be captured: %s"
+msgstr ""
+
+#: includes/payment.php:544
+#, php-format
+msgid "Amount Refunded. Rs. %1$s<br>Refund ID: %2$s<br>Reason: %3$s"
+msgstr ""
+
+#: includes/payment.php:550
+msgid "Refund Error Occured: "
+msgstr ""
+
+#: includes/payment.php:597
+msgid "Payment is Successful against this order.<br/>Transaction ID: "
+msgstr ""
+
+#: includes/payment.php:614
+msgid ""
+"Signature Verification Failed. If the money debited from your account, "
+"please Contact with Site Administrator for further action."
+msgstr ""
+
+#: includes/payment.php:623
+msgid ""
+"Order containing the Valid transaction ID is not found. If the money debited "
+"from your account, please Contact with Site Administrator for further action."
+msgstr ""
+
+#. translators: %s: Razorpay gateway error message
+#: includes/payment.php:667
+#, php-format
+msgid "Link Cancellation could not be captured: %s"
+msgstr ""
+
+#: includes/payment.php:679
+msgid "Invoice Link Cancelled."
+msgstr ""
+
+#: includes/payment.php:684
+msgid "Link Cancellation Error Occured: "
+msgstr ""
+
+#: rzp-woocommerce.php:96
+msgid "Settings"
+msgstr ""
+
+#: rzp-woocommerce.php:105
+msgid "Support"
+msgstr ""
+
+#: rzp-woocommerce.php:106
+msgid "FAQ"
+msgstr ""
+
+#: rzp-woocommerce.php:107
+msgid "Donate"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Razorpay Gateway for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://wordpress.org/plugins/rzp-woocommerce/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"The easiest and most secure solution to collect payments with WooCommerce. "
+"Allow customers to securely pay via Razorpay (Credit/Debit Cards, "
+"NetBanking, UPI, Wallets, QR Code)."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Sayan Datta"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://about.me/iamsayan"
+msgstr ""

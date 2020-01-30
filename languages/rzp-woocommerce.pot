@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "Project-Id-Version: Razorpay Gateway for WooCommerce\n"
-"POT-Creation-Date: 2020-01-30 14:58+0530\n"
+"POT-Creation-Date: 2020-01-30 16:20+0530\n"
 "PO-Revision-Date: 2020-01-25 23:09+0530\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -357,20 +357,34 @@ msgstr ""
 msgid "Link Cancellation Error Occured: "
 msgstr ""
 
-#: rzp-woocommerce.php:96
+#: rzp-woocommerce.php:92
 msgid "Settings"
 msgstr ""
 
-#: rzp-woocommerce.php:105
+#: rzp-woocommerce.php:104
 msgid "Support"
 msgstr ""
 
-#: rzp-woocommerce.php:106
+#: rzp-woocommerce.php:105
 msgid "FAQ"
 msgstr ""
 
-#: rzp-woocommerce.php:107
+#: rzp-woocommerce.php:106
 msgid "Donate"
+msgstr ""
+
+#: rzp-woocommerce.php:117
+msgid ""
+"Your version of PHP is below the minimum version of PHP required by Razorpay "
+"Gateway for WooCommerce plugin. Please contact your host and request that "
+"your version be upgraded to 5.6 or later."
+msgstr ""
+
+#: rzp-woocommerce.php:123
+#, php-format
+msgid ""
+"Thanks for installing %1$s v%2$s plugin. Click <a href=\"%3$s\">here</a> to "
+"configure plugin settings."
 msgstr ""
 
 #. Plugin Name of the plugin/theme

@@ -1,21 +1,21 @@
-=== Razorpay Gateway for WooCommerce ===
+=== Razorpay Payment Links for WooCommerce ===
 Contributors: infosatech
 Tags: razorpay, qrcode, upi, woocommerce, PaywithRazorpay
 Requires at least: 4.6
-Tested up to: 5.3
-Stable tag: 1.0.1
+Tested up to: 5.4
+Stable tag: 1.0.5
 Requires PHP: 5.6
 Donate link: https://www.paypal.me/iamsayan
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
-The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
+🔥 The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
 
 == Description ==
 
-### Razorpay Gateway for WooCommerce
+### Razorpay Payment Links for WooCommerce
 
-This is the Un-Official Razorpay Payment Gateway plugin for WooCommerce. Allows you to accept Credit Cards, Debit Cards, Netbanking, Wallets, and UPI Payments with the WooCommerce plugin.
+This is the Razorpay Payment Gateway plugin for WooCommerce based on [Razorpay Payment Links](https://razorpay.com/payment-links/). Allows you to accept Credit Cards, Debit Cards, Netbanking, Wallets, and UPI Payments with the WooCommerce plugin.
 
 It uses a Razorpay's Payment Link API integration, allowing the customer to pay on your website being redirected to Razorpay's Secure Payment Page. This allows for refunds, works across all browsers, and is compatible with the latest WooCommerce.
 
@@ -27,9 +27,9 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Customized "Order Received" message.
 * Mode of transaction Live and Test Mode.
 * Reference Order ID & Transaction ID.
-* Auto Refund from WooCommerce Order Details Section.
+* Auto Refund from WooCommerce Order Details Section. Instant Refund supported.
 * Ability to set payment link expiry time.
-* Collect Gateway Fees from Customer.
+* Easily Collect Gateway Fees from Customer.
 * Ability to send Payment Reminder automatically.
 * Secure Payment Capture Mechanism.
 * 92 [Razorpay Currency](https://razorpay.com/docs/international-payments/#supported-currencies) Support.
@@ -37,11 +37,11 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Detailed Payment process Log via WooCommerce Logger.
 * Lots of filters available to customize the output.
 
-Like Razorpay Gateway for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
+Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
 
 #### Compatibility
 
-* This plugin is fully compatible with WordPress Version 4.6 and WooCommerce v3.0.0 and beyond and also compatible with any WordPress theme.
+* This plugin is fully compatible with WordPress Version 4.6 and WooCommerce v3.1.0 and beyond and also compatible with any WordPress theme.
 
 #### Support
 * Community support via the [support forums](https://wordpress.org/support/plugin/rzp-woocommerce) at WordPress.org.
@@ -53,9 +53,9 @@ Like Razorpay Gateway for WooCommerce plugin? Consider leaving a [5 star review]
 == Installation ==
 
 1. Visit 'Plugins > Add New'.
-1. Search for 'Razorpay Gateway for WooCommerce' and install it.
+1. Search for 'Razorpay Payment Links for WooCommerce' and install it.
 1. Or you can upload the `rzp-woocommerce` folder to the `/wp-content/plugins/` directory manually.
-1. Activate Razorpay Gateway for WooCommerce from your Plugins page.
+1. Activate Razorpay Payment Links for WooCommerce from your Plugins page.
 1. After activation go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway'.
 1. Enable options and save changes.
 
@@ -67,7 +67,11 @@ Yes. You can access this from 'WooCommerce > Settings > Payments > Razorpay Paym
 
 = How to use this plugin? =
 
-Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/disable options as per your need and save your changes.
+Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/disable options as per your need and save changes.
+
+= How to use webhook? =
+
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes.
 
 = Is this plugin compatible with any themes? =
 
@@ -88,7 +92,33 @@ Post detailed information about the issue in the [support forum](https://wordpre
 
 == Changelog ==
 
-If you like Razorpay Gateway for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.0.5 =
+Release Date: May 24, 2020
+
+* Improved: Webhook Handler.
+
+= 1.0.4 =
+Release Date: May 18, 2020
+
+* Improved: Payment verfication mechanism.
+* Improved: Webhook mechanism.
+* Tweak: It is now possible to use any other payment method to make payment when payment initialized at first through the Razoypay Gateway method.
+
+= 1.0.3 =
+Release Date: May 12, 2020
+
+* NEW: Added Razorpay Webhook feature.
+* NEW: Added Instant Refund option.
+* Fixed: Email notification is not working properly.
+* Improved: Reduced icon image size to adapt the width properly.
+* Compatibilty with WooCommerce 4.1.
+
+= 1.0.2 =
+Release Date: April 26, 2020
+
+* Compatibilty with WordPress 5.4 and WooCommerce 4.0.
 
 = 1.0.1 =
 Release Date: January 30, 2020

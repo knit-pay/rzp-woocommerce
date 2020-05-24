@@ -1,33 +1,33 @@
 <?php
 /**
- * Plugin Name: Razorpay Gateway for WooCommerce
+ * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.0.1
+ * Version: 1.0.5
  * Author: Sayan Datta
- * Author URI: https://about.me/iamsayan
+ * Author URI: https://www.sayandatta.in
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
- * WC requires at least: 3.0
- * WC tested up to: 3.9
+ * WC requires at least: 3.1
+ * WC tested up to: 4.1
  * 
- * Razorpay Gateway for WooCommerce is free software: you can redistribute it and/or modify
+ * Razorpay Payment Links for WooCommerce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
  *
- * Razorpay Gateway for WooCommerce is distributed in the hope that it will be useful,
+ * Razorpay Payment Links for WooCommerce is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Razorpay Gateway for WooCommerce plugin. If not, see <http://www.gnu.org/licenses/>.
+ * along with Razorpay Payment Links for WooCommerce plugin. If not, see <http://www.gnu.org/licenses/>.
  * 
  * @category WooCommerce
- * @package  Razorpay Gateway for WooCommerce
- * @author   Sayan Datta <iamsayan@pm.me>
+ * @package  Razorpay Payment Links for WooCommerce
+ * @author   Sayan Datta <hello@sayandatta.in>
  * @license  http://www.gnu.org/licenses/ GNU General Public License
  * @link     https://wordpress.org/plugins/rzp-woocommerce/
  *
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $consts = array(
-    'RZPWC_WOO_PLUGIN_VERSION'     => '1.0.1', // plugin version
+    'RZPWC_WOO_PLUGIN_VERSION'     => '1.0.5', // plugin version
     'RZPWC_WOO_PLUGIN_BASENAME'    => plugin_basename( __FILE__ ),
     'RZPWC_WOO_PLUGIN_DIR'         => plugin_dir_url( __FILE__ )
 );
@@ -114,13 +114,13 @@ add_action( 'admin_notices', 'rzpwc_new_plugin_install_notice' );
 function rzpwc_new_plugin_install_notice() {
     // Show a warning to sites running PHP < 5.6
     if( version_compare( PHP_VERSION, '5.6', '<' ) ) {
-	    echo '<div class="error"><p>' . __( 'Your version of PHP is below the minimum version of PHP required by Razorpay Gateway for WooCommerce plugin. Please contact your host and request that your version be upgraded to 5.6 or later.', 'rzp-woocommerce' ) . '</p></div>';
+	    echo '<div class="error"><p>' . __( 'Your version of PHP is below the minimum version of PHP required by Razorpay Payment Links for WooCommerce plugin. Please contact your host and request that your version be upgraded to 5.6 or later.', 'rzp-woocommerce' ) . '</p></div>';
     }
 
     // Check transient, if available display notice
     if( get_transient( 'rzpwc-admin-notice-on-activation' ) ) { ?>
         <div class="notice notice-success">
-            <p><strong><?php printf( __( 'Thanks for installing %1$s v%2$s plugin. Click <a href="%3$s">here</a> to configure plugin settings.', 'rzp-woocommerce' ), 'Razorpay Gateway for WooCommerce', RZPWC_WOO_PLUGIN_VERSION, admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ); ?></strong></p>
+            <p><strong><?php printf( __( 'Thanks for installing %1$s v%2$s plugin. Click <a href="%3$s">here</a> to configure plugin settings.', 'rzp-woocommerce' ), 'Razorpay Payment Links for WooCommerce', RZPWC_WOO_PLUGIN_VERSION, admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ); ?></strong></p>
         </div> <?php
         delete_transient( 'rzpwc-admin-notice-on-activation' );
     }
@@ -128,4 +128,3 @@ function rzpwc_new_plugin_install_notice() {
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/payment.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/notice.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/donate.php';

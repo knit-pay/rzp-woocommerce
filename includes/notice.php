@@ -13,8 +13,8 @@ add_action( 'admin_notices', 'rzpwc_rating_admin_notice' );
 add_action( 'admin_init', 'rzpwc_dismiss_rating_admin_notice' );
 
 function rzpwc_rating_admin_notice() {
-    // Show notice after 240 hours (10 days) from installed time.
-    if ( rzpwc_plugin_get_installed_time() > strtotime( '-240 hours' )
+    // Show notice after 360 hours (15 days) from installed time.
+    if ( rzpwc_plugin_get_installed_time() > strtotime( '-360 hours' )
         || '1' === get_option( 'rzpwc_plugin_dismiss_rating_notice' )
         || ! current_user_can( 'manage_options' )
         || apply_filters( 'rzpwc_plugin_hide_sticky_notice', false ) ) {
@@ -28,15 +28,14 @@ function rzpwc_rating_admin_notice() {
         <p><?php _e( 'Hey, I noticed you\'ve been using Razorpay Gateway for WooCommerce for more than 1 week – that’s awesome! Could you please do me a BIG favor and give it a <strong>5-star</strong> rating on WordPress? Just to help me spread the word and boost my motivation.', 'rzp-woocommerce' ); ?></p>
         <p><a href="https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?filter=5#new-post" target="_blank" class="button button-secondary"><?php _e( 'Ok, you deserve it', 'rzp-woocommerce' ); ?></a>&nbsp;
         <a href="<?php echo $dismiss; ?>" class="already-did"><strong><?php _e( 'I already did', 'rzp-woocommerce' ); ?></strong></a>&nbsp;<strong>|</strong>
-        <a href="<?php echo $no_thanks; ?>" class="later"><strong><?php _e( 'Nope&#44; maybe later', 'rzp-woocommerce' ); ?></strong></a>&nbsp;<strong>|</strong>
-        <a href="<?php echo $dismiss; ?>" class="hide"><strong><?php _e( 'I don\'t want to rate', 'rzp-woocommerce' ); ?></strong></a></p>
+        <a href="<?php echo $no_thanks; ?>" class="later"><strong><?php _e( 'Nope&#44; maybe later', 'rzp-woocommerce' ); ?></strong></a>
     </div>
 <?php
 }
 
 function rzpwc_dismiss_rating_admin_notice() {
     if( get_option( 'rzpwc_plugin_no_thanks_rating_notice' ) === '1' ) {
-        if ( get_option( 'rzpwc_plugin_dismissed_time' ) > strtotime( '-168 hours' ) ) {
+        if ( get_option( 'rzpwc_plugin_dismissed_time' ) > strtotime( '-360 hours' ) ) {
             return;
         }
         delete_option( 'rzpwc_plugin_dismiss_rating_notice' );

@@ -71,11 +71,14 @@ function rzpwc_payment_gateway_class() {
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
             $this->key_id = $this->testmode ? $this->get_option( 'test_key_id' ) : $this->get_option( 'key_id' );
             $this->key_secret = $this->testmode ? $this->get_option( 'test_key_secret' ) : $this->get_option( 'key_secret' );
+            $this->webhook_enabled = $this->get_option( 'webhook_enabled' );
+            $this->webhook_secret = $this->testmode ? $this->get_option( 'test_webhook_secret' ) : $this->get_option( 'webhook_secret' );
             $this->sms_notification = $this->get_option( 'sms_notification' );
-            $this->email_notification = $this->get_option( 'gateway_fee' );
+            $this->email_notification = $this->get_option( 'email_notification' );
             $this->reminder = $this->get_option( 'reminder' );
             $this->link_expire = $this->get_option( 'link_expire' );
             $this->gateway_fee = $this->get_option( 'gateway_fee' );
+            $this->instant_refund = $this->get_option( 'instant_refund' );
             $this->debug = 'yes' === $this->get_option( 'debug_mode', 'no' );
             self::$log_enabled = $this->debug;
 
@@ -89,10 +92,16 @@ function rzpwc_payment_gateway_class() {
             // This action hook saves the settings
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
-            // You can also register a webhook here
+            // verify payment from redirection
             add_action( 'woocommerce_api_rzp-payment', array( $this, 'capture_payment' ) );
 
-            // cancel invoice on order cancel
+            // verify payment from webhook
+            add_action( 'woocommerce_api_rzp-webhook', array( $this, 'process_webhook' ) );
+
+            // cancel invoice if order paid via other payment gateways
+            add_action( 'woocommerce_order_status_processing', array( $this, 'cancel_payment_link' ), 10, 1 );
+            
+            // cancel invoice if order cancelled
             add_action( 'woocommerce_order_status_cancelled', array( $this, 'cancel_payment_link' ), 10, 1 );
 
             // add custom text on thankyou page
@@ -100,9 +109,6 @@ function rzpwc_payment_gateway_class() {
 
             // change wc payment link if exists razorpay link
             add_filter( 'woocommerce_get_checkout_payment_url', array( $this, 'custom_checkout_url' ), 10, 2 );
-
-            // set custom meta query
-            add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', array( $this, 'handle_custom_query_var' ), 10, 2 );
 
             if ( ! $this->is_valid_for_use() ) {
                 $this->enabled = 'no';
@@ -185,6 +191,7 @@ function rzpwc_payment_gateway_class() {
 	     * Initialise Gateway Settings Form Fields.
 	     */
  		public function init_form_fields() {
+
             $this->form_fields = array(
                 'enabled' => array(
                     'title'       => __( 'Enable/Disable:', 'rzp-woocommerce' ),
@@ -223,13 +230,13 @@ function rzpwc_payment_gateway_class() {
                 'key_id' => array(
                     'title'       => __( 'Live Client API Key:', 'rzp-woocommerce' ),
                     'type'        => 'text',
-                    'description' => __( 'The key Id and key secret can be generated from "API Keys" section of Razorpay Dashboard. Use live key for live mode.', 'rzp-woocommerce' ),
+                    'description' => __( 'The key Id can be generated from "API Keys" section of Razorpay Dashboard. Use live key for live mode.', 'rzp-woocommerce' ),
                     'desc_tip'    => true,
                 ),
                 'key_secret' => array(
                     'title'       => __( 'Live Client Secret Key:', 'rzp-woocommerce' ),
                     'type'        => 'password',
-                    'description' => __( 'The key Id and key secret can be generated from "API Keys" section of Razorpay Dashboard. Use live secret for live mode.', 'rzp-woocommerce' ),
+                    'description' => __( 'The key secret can be generated from "API Keys" section of Razorpay Dashboard. Use live secret for live mode.', 'rzp-woocommerce' ),
                     'desc_tip'    => true,
                 ),
                 'testmode' => array(
@@ -243,13 +250,38 @@ function rzpwc_payment_gateway_class() {
                 'test_key_id' => array(
                     'title'       => __( 'Test Client API Key:', 'rzp-woocommerce' ),
                     'type'        => 'text',
-                    'description' => __( 'The key Id and key secret can be generated from "API Keys" section of Razorpay Dashboard. Use test key for test mode.', 'rzp-woocommerce' ),
+                    'description' => __( 'The key Id can be generated from "API Keys" section of Razorpay Dashboard. Use test key for test mode.', 'rzp-woocommerce' ),
                     'desc_tip'    => true,
                 ),
                 'test_key_secret' => array(
                     'title'       => __( 'Test Client Secret Key:', 'rzp-woocommerce' ),
                     'type'        => 'password',
-                    'description' => __( 'The key Id and key secret can be generated from "API Keys" section of Razorpay Dashboard. Use test secret for test mode.', 'rzp-woocommerce' ),
+                    'description' => __( 'The key secret can be generated from "API Keys" section of Razorpay Dashboard. Use test secret for test mode.', 'rzp-woocommerce' ),
+                    'desc_tip'    => true,
+                ),
+                'webhook_details' => array(
+                    'title'       => __( 'Razorpay Webhook', 'rzp-woocommerce' ),
+                    'type'        => 'title',
+                    'description' => sprintf( __( 'Webhook URL: %1$sOnly "%2$s" and "%3$s" action events supported.' ), '<span style="color: #0073aa;">' . get_home_url() . '/wc-api/rzp-webhook/</span><br>', 'payment.authorized', 'refund.created' ),
+                ),
+                'webhook_enabled' => array(
+                    'title'       => __( 'Razorpay Webhook:', 'rzp-woocommerce' ),
+                    'label'       => __( 'Enable Razorpay Webhook', 'rzp-woocommerce' ),
+                    'type'        => 'checkbox',
+                    'description' => __( 'Use the above webhook URL in Razorpaay "Settings > Webhooks".', 'rzp-woocommerce' ),
+                    'default'     => 'no',
+                    'desc_tip'    => true,
+                ),
+                'webhook_secret' => array(
+                    'title'       => __( 'Live Webhook Secret Key:', 'rzp-woocommerce' ),
+                    'type'        => 'password',
+                    'description' => __( 'The webhook secret can be generated from "Webhooks" section of Razorpay Dashboard.', 'rzp-woocommerce' ),
+                    'desc_tip'    => true,
+                ),
+                'test_webhook_secret' => array(
+                    'title'       => __( 'Test Webhook Secret Key:', 'rzp-woocommerce' ),
+                    'type'        => 'password',
+                    'description' => __( 'The webhook secret can be generated from "Webhooks" section of Razorpay Dashboard of test account.', 'rzp-woocommerce' ),
                     'desc_tip'    => true,
                 ),
                 'configure' => array(
@@ -293,7 +325,15 @@ function rzpwc_payment_gateway_class() {
                     'title'       => __( 'Payment Gateway Fees:', 'rzp-woocommerce' ),
                     'label'       => __( 'Collect Razorpay Gateway Fees from Customer', 'rzp-woocommerce' ),
                     'type'        => 'checkbox',
-                    'description' => __( 'Enable this option to collect the Razorpay Gateway Fee from your customers for the payments they make.', 'rzp-woocommerce' ),
+                    'description' => __( 'Enable this option to collect the Razorpay Gateway Fee from your customers for the payments they make. Gateway fees will be automatically excluded if a refund is made from WordPress dashboard.', 'rzp-woocommerce' ),
+                    'default'     => 'no',
+                    'desc_tip'    => true,
+                ),
+                'instant_refund' => array(
+                    'title'       => __( 'Instant Refund:', 'rzp-woocommerce' ),
+                    'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
+                    'type'        => 'checkbox',
+                    'description' => __( 'Enable this option to refund instantly. It will only work if Instant Refund is enabled on your account.', 'rzp-woocommerce' ),
                     'default'     => 'no',
                     'desc_tip'    => true,
                 ),
@@ -318,11 +358,8 @@ function rzpwc_payment_gateway_class() {
             $order = wc_get_order( $order_id );
 
             $amount = $order->get_total();
-            $tc = ( $amount / 100 ) * 2;
-            $tax = $tc + ( ( $tc / 100 ) * 18 );
-            $tax = apply_filters( 'rzpwc_charge_custom_tax_amount', $tax, $amount, $order );
-            if( $this->gateway_fee === 'yes' ) {
-                $amount = $amount + $tax;
+            if ( $this->gateway_fee === 'yes' ) {
+                $amount = apply_filters( 'rzpwc_charge_custom_tax_amount', ( $amount / 97.64 ) * 100, $amount, $order );
             }
 
             // api url
@@ -336,28 +373,28 @@ function rzpwc_payment_gateway_class() {
                 'view_less' => 1,
                 'amount' => round( $amount * 100 ),
                 'currency' => $order->get_currency(),
-                'description' => apply_filters( 'rzpwc_payment_init_description', __( 'Order ID: ', 'rzp-woocommerce' ), $order ) . $order_id,
-                'receipt' => substr( hash( 'sha256', mt_rand() . microtime() ), 0, 20 ),
+                'description' => apply_filters( 'rzpwc_payment_init_description', __( 'Order ID: ', 'rzp-woocommerce' ) ) . $order_id,
+                'receipt' => substr( $order->get_order_key(), 0, 40 ),
                 'customer' => array(
                     'name' => html_entity_decode( $order->get_formatted_billing_full_name(), ENT_QUOTES, 'UTF-8' ),
-                    'email' => substr( $order->get_billing_email(), 0, 100 ),
+                    'email' => $order->get_billing_email(),
                     'contact' => substr( $order->get_billing_phone(), -10 )
                 ),
                 'reminder_enable' => ( $this->reminder === 'yes' ) ? true : false,
                 'sms_notify' => ( $this->sms_notification === 'yes' ) ? 1 : 0,
                 'email_notify' => ( $this->email_notification === 'yes' ) ? 1 : 0,
                 'notes' => array(
-                    'woocommerce_order_id' => $order_id,
                     'full_name' => html_entity_decode( $order->get_formatted_billing_full_name(), ENT_QUOTES, 'UTF-8' ),
-                    'email' => substr( $order->get_billing_email(), 0, 100 ),
-                    'contact' => substr( $order->get_billing_phone(), -10 )
+                    'email' => $order->get_billing_email(),
+                    'contact' => substr( $order->get_billing_phone(), -10 ),
+                    'woocommerce_order_id' => $order_id
                 ),
-                'callback_url' => get_home_url().'/wc-api/rzp-payment/',
+                'callback_url' => get_home_url().'/wc-api/rzp-payment/?order_id='.$order_id,
                 'callback_method' => 'get',
             );
 
             $held_duration = apply_filters( 'rzpwc_payment_link_expire_duration', get_option( 'woocommerce_hold_stock_minutes' ) );
-            if( $this->link_expire === 'yes' && 'yes' === get_option( 'woocommerce_manage_stock' ) && $held_duration >= 1 ) { 
+            if ( $this->link_expire === 'yes' && 'yes' === get_option( 'woocommerce_manage_stock' ) && $held_duration >= 1 ) { 
                 $args['expire_by'] = time() + ( absint( $held_duration ) * 60 ); 
             } 
 
@@ -368,7 +405,7 @@ function rzpwc_payment_gateway_class() {
             // get order meta
             $pay_url = $order->get_meta( '_rzp_payment_url', true );
 
-            if( empty( $pay_url ) ) {
+            if ( empty( $pay_url ) ) {
 
                 $this->log( "Key ID: $this->key_id | Key Secret: $this->key_secret" );
 
@@ -385,7 +422,7 @@ function rzpwc_payment_gateway_class() {
                     ) )
                 );
              
-                if( is_wp_error( $response ) ) {
+                if ( is_wp_error( $response ) ) {
 
                     $this->log( 'Payment Link Generation Failed: ' . $response->get_error_message(), 'error' );
                         
@@ -396,11 +433,11 @@ function rzpwc_payment_gateway_class() {
                 } else {
              
                     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-    
+                    
                     $this->log( 'Response from server on creating Payment Link: ' . wc_print_r( $body, true ) );
     
                     // check the json response from Razorpay payment processor
-                    if( isset( $body['status'] ) && $body['status'] === 'issued' ) {
+                    if ( isset( $body['status'] ) && $body['status'] === 'issued' ) {
         
                         // we received the payment init request
                         $order->update_status( apply_filters( 'rzpwc_order_status_on_payment_init', 'pending' ) );
@@ -422,21 +459,16 @@ function rzpwc_payment_gateway_class() {
                             'redirect' => apply_filters( 'rzpwc_payment_init_redirect', esc_url( $body['short_url'] ), $order )
                         );
             
-                    } elseif( isset( $body['error'] ) ) {
+                    } elseif ( isset( $body['error'] ) ) {
 
                         $this->log( __( 'Error Occured: ', 'rzp-woocommerce' ) . esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ) );
                         
                         // add order note
                         $order->add_order_note( esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ), false );
             
-                        // update the order status
-                        $order->update_status( 'failed' );
-
-                        // Redirect to the the thankyou page
-                        return array(
-                            'result'   => 'success',
-                            'redirect' => apply_filters( 'rzpwc_payment_failed_redirect', $this->get_return_url( $order ), $order )
-                        );
+                        // add error notice
+                        wc_add_notice( __( 'Connection Error Occured! Please try again.', 'rzp-woocommerce' ), 'error' );
+                        return;
             
                     }
              
@@ -484,9 +516,9 @@ function rzpwc_payment_gateway_class() {
             $order = wc_get_order( $order_id );
 
             if ( ! $this->can_refund_order( $order ) ) {
-                $this->log( 'Refund failed. Order ID: ' . $order->get_id() );
+                $this->log( 'Refund can\'t be initiated. Please check your plugin settings. Order ID: ' . $order->get_id() );
 
-                return new WP_Error( 'error', __( 'Refund failed.', 'rzp-woocommerce' ) );
+                return new WP_Error( 'error', __( 'Refund can\'t be initiated. Please check your plugin settings.', 'rzp-woocommerce' ) );
             }
         
             // get order meta
@@ -500,8 +532,11 @@ function rzpwc_payment_gateway_class() {
                 $args['amount'] = round( $amount * 100 );
             }
 
+            $args['speed'] = ( $this->instant_refund === 'yes' ) ? 'optimum' : 'normal';
+
             // add notes to array
-            $args['notes']['reason'] = ! empty( $reason ) ? $reason : __( 'No reason specified!', 'rzp-woocommerce' );
+            $args['notes']['comment'] = ! empty( $reason ) ? $reason : __( 'No reason specified!', 'rzp-woocommerce' );
+            $args['notes']['woocommerce_order_id'] = $order->get_id();
 
             $args = apply_filters( 'rzpwc_payment_refund_payload', $args, $order );
 
@@ -535,18 +570,20 @@ function rzpwc_payment_gateway_class() {
             } else {
                  
                 $body = json_decode( wp_remote_retrieve_body( $response ), true );
-    
+
                 $this->log( 'Response from server on Refund: ' . wc_print_r( $body, true ) );
     
                 // check the json response from Razorpay payment processor
-                if( isset( $body['entity'] ) && $body['entity'] === 'refund' ) {
+                if ( isset( $body['entity'] ) && $body['entity'] === 'refund' ) {
                     // add order note
-                    $order->add_order_note( sprintf( __( 'Amount Refunded. Rs. %1$s<br>Refund ID: %2$s<br>Reason: %3$s' ), esc_attr( round( $body['amount'] / 100 ) ), esc_attr( $body['id'] ), esc_attr( $body['notes']['reason'] ) ), false );
+                    $order->add_order_note( sprintf( __( 'Amount Refunded. Rs. %1$s<br>Refund ID: %2$s<br>Reason: %3$s' ), esc_attr( round( $body['amount'] / 100 ) ), esc_attr( $body['id'] ), esc_attr( $body['notes']['comment'] ) ), false );
                     // store refund id to meta
                     update_post_meta( $order->get_id(), '_rzp_refund_id', esc_attr( $body['id'] ) );
-                    
+                    delete_post_meta( $order->get_id(), '_rzp_payment_url' );
+
                     return true;
-                } elseif( isset( $body['error'] ) ) {
+                } elseif ( isset( $body['error'] ) ) {
+                    // refund note
                     $this->log( __( 'Refund Error Occured: ', 'rzp-woocommerce' ) . esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ) );
         
                     return new WP_Error( 'error', esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ) );
@@ -560,11 +597,29 @@ function rzpwc_payment_gateway_class() {
 	     * Process a payment capture.
 	     */
         public function capture_payment() {
+            // check server request method
+            if ( 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+                // create redirect
+                wp_safe_redirect( home_url() );
+                exit;
+            }
+
             // check GET veriables
-            if( ! isset( $_GET['razorpay_payment_id'] ) || ! isset( $_GET['razorpay_invoice_id'] ) || ! isset( $_GET['razorpay_invoice_receipt'] ) || ! isset( $_GET['razorpay_invoice_status'] ) || ! isset( $_GET['razorpay_signature'] ) ) {
+            if( ! isset( $_GET['order_id'], $_GET['razorpay_payment_id'], $_GET['razorpay_invoice_id'], $_GET['razorpay_invoice_receipt'], $_GET['razorpay_invoice_status'], $_GET['razorpay_signature'] ) ) {
                 $this->log( 'Missing the nessesary GET variables.' );
                 // create redirect
                 wp_safe_redirect( home_url() );
+                exit;
+            }
+
+            // generate order
+            $order = wc_get_order( $_GET['order_id'] );
+
+            // check if it an order
+            if ( ! is_a( $order, 'WC_Order' ) ) {
+                $title = __( 'Order can\'t be found against this payment. If the money deducted from your account, please contact with Site Administrator for further action. Thanks for your understanding.', 'rzp-woocommerce' );
+                        
+                wp_die( $title, get_bloginfo( 'name' ) );
                 exit;
             }
 
@@ -579,48 +634,35 @@ function rzpwc_payment_gateway_class() {
             $this->log( "Original Signature: " . esc_attr( $_GET['razorpay_signature'] ) );
             $this->log( "Generated Signature: $expected_signature" );
 
-            $orders = wc_get_orders( array( 
-                'txn_id' => esc_attr( $_GET['razorpay_invoice_receipt'] ),
-                'limit'  => 1
-            ) );
-
-            if ( ! empty( $orders ) ) {
-                if( isset( $_GET['razorpay_signature'] ) && esc_attr( $_GET['razorpay_signature'] ) === $expected_signature ) {
-                    $this->log( 'Original and Generated Signature matched.' );
-                    foreach ( $orders as $order ) {
-                        if ( $this->id === $order->get_payment_method() ) {
-                            // update the payment reference
-                            $order->payment_complete( esc_attr( $_GET['razorpay_payment_id'] ) );
-                            wc_reduce_stock_levels( $order->get_id() );
-                            
-                            // add some order notes
-                            $order->add_order_note( __( 'Payment is Successful against this order.<br/>Transaction ID: ', 'rzp-woocommerce' ) . esc_attr( $_GET['razorpay_payment_id'] ), false );
-                        
-                            delete_post_meta( $order->get_id(), '_rzp_payment_url' );
-            
-                            $this->log( 'Order marked as paid successfully. Redirecting...' );
-
-                            wp_safe_redirect( apply_filters( 'rzpwc_payment_success_redirect', $this->get_return_url( $order ), $order ) );
-                            exit;
-                        }
-                    }
-
-                } else {
-                    $this->log( 'Original and Generated Signature not matched.' );
+            // match signatures
+            if( hash_equals( $expected_signature, esc_attr( $_GET['razorpay_signature'] ) ) ) {
+                $this->log( 'Original and Generated Signature matched.' );
+                
+                 // check order info
+                if ( $this->id === $order->get_payment_method() && $order->needs_payment() === true ) {
+                    // update the payment reference
+                    $order->payment_complete( esc_attr( $_GET['razorpay_payment_id'] ) );
+                    
+                    // reduce stock
+                    wc_reduce_stock_levels( $order->get_id() );
+                    
+                    // add some order notes
+                    $order->add_order_note( __( 'Payment is Successful against this order.<br/>Transaction ID: ', 'rzp-woocommerce' ) . esc_attr( $_GET['razorpay_payment_id'] ), false );
+                
+                    // remove old payment link
+                    delete_post_meta( $order->get_id(), '_rzp_payment_url' );
     
-                    // update the order status
-                    $order->update_status( 'failed' );
-    
-                    $title = apply_filters( 'rzpwc_payment_signature_verify_failed_text', __( 'Signature Verification Failed. If the money debited from your account, please Contact with Site Administrator for further action.', 'rzp-woocommerce' ) );
-                        
-                    wp_die( $title, get_bloginfo( 'name' ) );
-                    exit;
+                    $this->log( 'Order marked as paid successfully. Redirecting...' );
                 }
-
+                wp_safe_redirect( apply_filters( 'rzpwc_payment_success_redirect', $this->get_return_url( $order ), $order ) );
+                exit;
             } else {
-                $this->log( 'Order containing the Valid transaction ID is not found. Aborting...' );
+                $this->log( 'Original and Generated Signature mismatched. Transaction verfication failed!' );
 
-                $title = __( 'Order containing the Valid transaction ID is not found. If the money debited from your account, please Contact with Site Administrator for further action.', 'rzp-woocommerce' );
+                // update the order status
+                $order->update_status( 'failed' );
+
+                $title = apply_filters( 'rzpwc_payment_signature_verify_failed_text', __( 'Signature Verification Failed. If the money debited from your account, please Contact with Site Administrator for further action.', 'rzp-woocommerce' ) );
                     
                 wp_die( $title, get_bloginfo( 'name' ) );
                 exit;
@@ -638,10 +680,10 @@ function rzpwc_payment_gateway_class() {
         
             // get order meta
             $inv_id = $order->get_meta( '_rzp_invoice_id', true );
-            $pay_id = $order->get_transaction_id();
+            $pay_url = $order->get_meta( '_rzp_payment_url', true );
             $refund_id = $order->get_meta( '_rzp_refund_id', true );
         
-            if( ! empty( $inv_id ) && empty( $pay_id ) && empty( $refund_id ) && apply_filters( 'rzpwc_cancel_link_on_order_cancel', true ) ) {
+            if( 'yes' === $this->enabled && ( ( $this->id !== $order->get_payment_method() && $order->has_status( 'processing' ) ) || $order->has_status( 'cancelled' ) ) && ! empty( $pay_url ) && ! empty( $inv_id ) ) {
                 // api url
                 $api_endpoint = 'https://api.razorpay.com/v1/invoices/'.$inv_id.'/cancel';
 
@@ -661,7 +703,7 @@ function rzpwc_payment_gateway_class() {
         
                 if( is_wp_error( $response ) ) {
 
-                    $this->log( 'Link Cancellation Capture Failed: ' . $response->get_error_message(), 'error' );
+                    $this->log( 'Link Cancellation Failed: ' . $response->get_error_message(), 'error' );
                         
                     /* translators: %s: Razorpay gateway error message */
 				    $order->add_order_note( sprintf( __( 'Link Cancellation could not be captured: %s', 'rzp-woocommerce' ), $response->get_error_message() ) );
@@ -670,18 +712,19 @@ function rzpwc_payment_gateway_class() {
                 } else {
                      
                     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        
+                    
                     $this->log( 'Response from server on Link Cancellation: ' . wc_print_r( $body, true ) );
         
                     // check the json response from Razorpay payment processor
-                    if( isset( $body['status'] ) && $body['status'] === 'cancelled' ) {
+                    if ( isset( $body['status'] ) && $body['status'] === 'cancelled' ) {
                         // add order note
                         $order->add_order_note( __( 'Invoice Link Cancelled.', 'rzp-woocommerce' ), false );
+                        
                         // remove old payment link
                         delete_post_meta( $order->get_id(), '_rzp_payment_url' );
                         
-                    } elseif( isset( $body['error'] ) ) {
-                        $this->log( __( 'Link Cancellation Error Occured: ', 'rzp-woocommerce' ) . esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ) );
+                    } elseif ( isset( $body['error'] ) ) {
+                        $this->log( __( 'Link Cancellation falied: ', 'rzp-woocommerce' ) . esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ) );
             
                         // add order note
                         $order->add_order_note( $body['error']['code'] . ' : ' . $body['error']['description'], false );
@@ -698,7 +741,7 @@ function rzpwc_payment_gateway_class() {
 	     * @return string
 	     */
 	    public function order_received_text( $text, $order ) {
-	    	if ( $this->id === $order->get_payment_method() && ! empty( $this->thank_you ) ) {
+	    	if ( 'yes' === $this->enabled && $this->id === $order->get_payment_method() && ! empty( $this->thank_you ) ) {
 	    		return esc_html( $this->thank_you );
 	    	}
     
@@ -714,7 +757,7 @@ function rzpwc_payment_gateway_class() {
 	     */
 	    public function custom_checkout_url( $url, $order ) {
             $pay_url = $order->get_meta( '_rzp_payment_url', true );
-	    	if ( $this->id === $order->get_payment_method() && ! empty( $pay_url ) && apply_filters( 'rzpwc_custom_checkout_url', true ) ) {
+	    	if ( 'yes' === $this->enabled && $this->id === $order->get_payment_method() && ! empty( $pay_url ) && apply_filters( 'rzpwc_custom_checkout_url', false ) ) {
 	    		return esc_url( $pay_url );
 	    	}
     
@@ -722,20 +765,147 @@ function rzpwc_payment_gateway_class() {
         }
 
         /**
-         * Handle a custom 'txn_id' query var to get orders with the '_rzp_receipt_id' meta.
-         * @param array $query - Args for WP_Query.
-         * @param array $query_vars - Query vars from WC_Order_Query.
-         * @return array modified $query
-         */
-        public function handle_custom_query_var( $query, $query_vars ) {
-        	if ( ! empty( $query_vars['txn_id'] ) ) {
-        		$query['meta_query'][] = array(
-        			'key' => '_rzp_receipt_id',
-        			'value' => esc_attr( $query_vars['txn_id'] ),
-        		);
-        	}
+          * Process webhook payloads.
+          */
+          public function process_webhook() {
+            // check server request method
+            if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+                // create redirect
+                wp_safe_redirect( home_url() );
+                exit;
+            }
+            
+            $post = file_get_contents( 'php://input' );
+            $data = json_decode( $post, true );
+            if ( json_last_error() !== 0 ) {
+                return;
+            }
         
-        	return $query;
+            if ( $this->webhook_enabled === 'yes' && ! empty( $this->webhook_secret ) && ! empty( $data['event'] ) ) {
+                if ( isset( $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ) ) {
+                    // generate hash
+                    $expected_signature = hash_hmac( 'sha256', $post, $this->webhook_secret );
+                    // check signatures
+                    if ( hash_equals( $expected_signature, $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ) ) {
+                        switch ( $data['event'] ) {
+                            case 'payment.authorized':
+                                return $this->webhook_update_order( $data );
+                            case 'refund.created':
+                                return $this->webhook_refund_order( $data );
+                            default:
+                                return;
+                        }
+                    }
+                }
+            }
+
+            status_header( 200 );
+		    exit;
+        }
+
+        /**
+          * Process order update.
+          *
+          * @param array  $data
+          */
+        private function webhook_update_order( $data ) {
+            // get payloads
+            $razorpayPaymentId = $data['payload']['payment']['entity']['id'];
+            $razorpayStatus = $data['payload']['payment']['entity']['status'];
+            $orderId = $data['payload']['payment']['entity']['notes']['woocommerce_order_id'];
+            $order = wc_get_order( $orderId );
+            
+            // check if it an order
+            if ( is_a( $order, 'WC_Order' ) ) {
+                if ( ! empty( $razorpayStatus ) && $razorpayStatus === 'authorized' && $order->needs_payment() === true ) {
+                    // update the payment reference
+                    $order->payment_complete( esc_attr( $razorpayPaymentId ) );
+                    
+                    // reduce stock
+                    wc_reduce_stock_levels( $order->get_id() );
+                            
+                    // add some order notes
+                    $order->add_order_note( __( 'Payment is Successful against this order.<br/>Transaction ID: ', 'rzp-woocommerce' ) . esc_attr( $razorpayPaymentId ), false );
+                }
+            }
+        }
+
+        /**
+         * Process order refund.
+         *
+         * @param array  $data 
+         */
+        private function webhook_refund_order( $data ) {
+            // get payloads
+            $refundId = $data['payload']['refund']['entity']['id'];
+            $razorpayPaymentId = $data['payload']['refund']['entity']['payment_id'];
+            $refund_amount = round( ( $data['payload']['refund']['entity']['amount'] / 100 ), 2 );
+            $refund_reason = $data['payload']['refund']['entity']['notes']['comment'];
+        
+            if ( isset( $data['payload']['refund']['entity']['notes']['woocommerce_order_id'] ) ) {
+                $orderId = $data['payload']['refund']['entity']['notes']['woocommerce_order_id'];
+            } else {
+                $orderId = $this->get_wc_order_id( $razorpayPaymentId );
+            }
+        
+            $order = wc_get_order( $orderId );
+        
+            // check if it an order
+            if( is_a( $order, 'WC_Order' ) ) {
+                // If it is already marked as unpaid, ignore the event
+                if ( $order->needs_payment() === false && ! $order->has_status( 'refunded' ) ) {
+                    wc_create_refund( array(
+                        'amount'         => $refund_amount,
+                        'reason'         => $refund_reason,
+                        'order_id'       => $order->get_id(),
+                        'line_items'     => array(),
+                        'refund_payment' => false,
+                        'restock_items'  => true
+                    ) );
+                    // add some order notes
+                    $order->add_order_note( __( 'Order amount is refunded.<br/>Refund ID: ', 'rzp-woocommerce' ) . esc_attr( $refundId ), false );
+                    // store refund id to meta
+                    update_post_meta( $order->get_id(), '_rzp_refund_id', esc_attr( $refundId ) );
+                }
+            }
+        
+            // Graceful exit since refund is now processed.
+            exit;
+        }
+        
+        /**
+         * Get WC Order ID.
+         *
+         * @param string $payment_id
+         */
+        private function get_wc_order_id( $payment_id ) {
+            // api url
+            $api_endpoint = 'https://api.razorpay.com/v1/payments/'.$payment_id;
+            $auth = base64_encode( $this->key_id . ':' . $this->key_secret );
+            
+            /*
+             * Build API interaction
+              */
+            $response = wp_remote_get( $api_endpoint, array(
+                'headers' => array(
+                    'Content-Type'   => 'application/json',
+                    'Authorization'  => "Basic $auth",
+                ) )
+            );
+            
+            if( is_wp_error( $response ) ) {
+                return;
+            }
+        
+            $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        
+            $orderId = $body['notes']['woocommerce_order_id'];
+            
+            if ( ! empty( $orderId ) ) {
+                return $orderId;
+            }
+        
+            return false;
         }
  	}
 }

@@ -1,6 +1,6 @@
-![alt text](https://github.com/iamsayan/rzp-woocommerce/raw/master/banner.png "Plugin Banner")
+![Razorpay Payment Links for WooCommerce](.github/banner.png "Plugin Banner")
 
-# Razorpay Gateway for WooCommerce
+# Razorpay Payment Links for WooCommerce
 
 This is the Un-Official Razorpay Payment Gateway plugin for WooCommerce. Allows you to accept Credit Cards, Debit Cards, Netbanking, Wallets, and UPI Payments with the WooCommerce plugin.
 
@@ -8,7 +8,7 @@ This is the Un-Official Razorpay Payment Gateway plugin for WooCommerce. Allows 
 
 ## Description
 
-### Razorpay Gateway for WooCommerce
+### Razorpay Payment Links for WooCommerce
 
 This is the Un-Official Razorpay Payment Gateway plugin for WooCommerce. Allows you to accept Credit Cards, Debit Cards, Netbanking, Wallets, and UPI Payments with the WooCommerce plugin.
 
@@ -32,7 +32,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Detailed Payment process Log via WooCommerce Logger.
 * Lots of filters available to customize the output.
 
-Like Razorpay Gateway for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
+Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
 
 ### Compatibility
 
@@ -49,13 +49,13 @@ Like Razorpay Gateway for WooCommerce plugin? Consider leaving a [5 star review]
 
 ### From within WordPress
 1. Visit 'Plugins > Add New'.
-1. Search for 'Razorpay Gateway for WooCommerce'.
-1. Activate Razorpay Gateway for WooCommerce from your Plugins page.
+1. Search for 'Razorpay Payment Links for WooCommerce'.
+1. Activate Razorpay Payment Links for WooCommerce from your Plugins page.
 1. Go to "after activation" below.
 
 ### Manually
 1. Upload the `rzp-woocommerce` folder to the `/wp-content/plugins/` directory.
-1. Activate Razorpay Gateway for WooCommerce plugin through the 'Plugins' menu in WordPress.
+1. Activate Razorpay Payment Links for WooCommerce plugin through the 'Plugins' menu in WordPress.
 1. Go to "after activation" below.
 
 ### After activation
@@ -71,6 +71,22 @@ Yes. You can access this from 'WooCommerce > Settings > Payments > Razorpay Paym
 #### How to use this plugin?
 
 Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/disable options as per your need and save your changes.
+
+#### How to use webhook? What webhooks are supported? =
+
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at hello@sayandatta.in or https://www.sayandatta.in/contact/ as it needs custom developmet. 
+
+#### How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+
+#### I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+
+#### I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
 
 #### Is this plugin compatible with any themes?
 

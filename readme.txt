@@ -1,15 +1,15 @@
 === Razorpay Payment Links for WooCommerce ===
 Contributors: infosatech
-Tags: razorpay, qrcode, upi, woocommerce, PaywithRazorpay
+Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
 Requires at least: 4.6
-Tested up to: 5.4
-Stable tag: 1.0.5
+Tested up to: 6.0
+Stable tag: 1.1.6
 Requires PHP: 5.6
-Donate link: https://www.paypal.me/iamsayan
+Donate link: https://rzp.io/l/Bq3W5pr
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
-🔥 The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
+The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
 
 == Description ==
 
@@ -69,9 +69,21 @@ Yes. You can access this from 'WooCommerce > Settings > Payments > Razorpay Paym
 
 Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/disable options as per your need and save changes.
 
-= How to use webhook? =
+= How to use webhook? What webhooks are supported? =
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes.
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at hello@sayandatta.in or https://www.sayandatta.in/contact/ as it needs custom developmet. 
+
+= How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+
+= I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+
+= I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
+
+It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
 
 = Is this plugin compatible with any themes? =
 
@@ -93,6 +105,72 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.1.6 =
+Release Date: July 15, 2022
+
+* Improved: Code Quality.
+* WordPress tested upto v6.0.
+* WC Tested upto v6.7.
+
+= 1.1.5 =
+Release Date: July 25, 2021
+
+* Improved: Localhost check.
+* Support for old WC Version (2.0 to 3.1)
+* WC Tested upto v5.5 and v5.6.
+
+= 1.1.4 =
+Release Date: June 16, 2021
+
+* Added: Order Number instead of Order ID.
+* WC Tested upto v5.4.
+
+= 1.1.3 =
+Release Date: May 23, 2021
+
+* Added: Auto Enable Webhook on plugin settings save.
+* Fixed: Bug related to new API.
+
+= 1.1.2 =
+Release Date: January 11, 2021
+
+* Added: Option to switch between Standard and Legacy Payment Links API. If your Razorpay Account was created on or after 1 September 2020 and Legacy API is not working for you, please use Standrard API. Legacy API will be officially deprecated by Razorpay on 31st March, 2021.
+
+= 1.1.1 =
+Release Date: December 14, 2020
+
+* WordPress tested upto v5.6.
+* WC Tested upto v4.8.
+
+= 1.1.0 =
+Release Date: November 7, 2020
+
+* Fixed: Partial refund from Razorpay Dashbaord causing multiple refund events.
+* WC Tested upto v4.6.
+
+= 1.0.9 =
+Release Date: August 15, 2020
+
+* Fixed: Webhook Issue.
+* WC Tested upto v4.4.
+
+= 1.0.8 =
+Release Date: July 24, 2020
+
+* Fixed: Redirection issue due to recent Razorpay API Chnages.
+
+= 1.0.7 =
+Release Date: July 20, 2020
+
+* WC Tested upto v4.3.
+
+= 1.0.6 =
+Release Date: June 9, 2020
+
+* Tweak: Cart will not be cleared if payment is not actually made.
+* Fixed: Redirection issue.
+* WC Tested upto v4.2.0
 
 = 1.0.5 =
 Release Date: May 24, 2020

@@ -2,8 +2,8 @@
 Contributors: infosatech
 Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
 Requires at least: 4.6
-Tested up to: 6.0
-Stable tag: 1.1.6
+Tested up to: 6.1
+Stable tag: 1.1.7
 Requires PHP: 5.6
 Donate link: https://rzp.io/l/Bq3W5pr
 License: GPLv3
@@ -105,6 +105,13 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.1.7 =
+Release Date: December 10, 2022
+
+* Tweak: Default API is now set as Standard Mode.
+* WordPress tested upto v6.1.
+* WC Tested upto v7.1.
 
 = 1.1.6 =
 Release Date: July 15, 2022

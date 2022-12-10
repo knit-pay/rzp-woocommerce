@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.7
+Release Date: December 10, 2022
+
+* Tweak: Default API is now set as Standard Mode.
+* WordPress tested upto v6.1.
+* WC Tested upto v7.1.
+
 ## 1.1.6
 Release Date: July 15, 2022
 

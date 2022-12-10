@@ -3,14 +3,14 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.1.6
+ * Version: 1.1.7
  * Author: Sayan Datta
  * Author URI: https://sayandatta.in
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
  * WC requires at least: 2.0
- * WC tested up to: 6.7
+ * WC tested up to: 7.1
  * 
  * Razorpay Payment Links for WooCommerce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $consts = array(
-    'RZPWC_WOO_PLUGIN_VERSION'  => '1.1.6', // plugin version
+    'RZPWC_WOO_PLUGIN_VERSION'  => '1.1.7', // plugin version
     'RZPWC_WOO_PLUGIN_BASENAME' => plugin_basename( __FILE__ ),
     'RZPWC_WOO_PLUGIN_DIR'      => plugin_dir_url( __FILE__ ),
 );
@@ -129,7 +129,7 @@ function rzpwc_new_plugin_install_notice() {
         <div class="notice notice-success">
             <p><strong><?php 
             /* translators: %s: Plugin Details. 1. Plugin Name, 2. Plugin Version, 3. Plugin Settings */
-            printf( esc_html__( 'Thanks for installing %1$s v%2$s plugin. Click <a href="%3$s">here</a> to configure plugin settings.', 'rzp-woocommerce' ), 'Razorpay Payment Links for WooCommerce', esc_html( RZPWC_WOO_PLUGIN_VERSION ), esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ) ); ?></strong></p>
+            printf( wp_kses_post( __( 'Thanks for installing %1$s v%2$s plugin. Click <a href="%3$s">here</a> to configure plugin settings.', 'rzp-woocommerce' ) ), 'Razorpay Payment Links for WooCommerce', esc_html( RZPWC_WOO_PLUGIN_VERSION ), esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ) ); ?></strong></p>
         </div> <?php
         delete_transient( 'rzpwc-admin-notice-on-activation' );
     }

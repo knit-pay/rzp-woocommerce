@@ -250,9 +250,9 @@ function rzpwc_payment_gateway_class() {
                 'api_type'           => array(
                     'title'       => __( 'Razorpay API Type:', 'rzp-woocommerce' ),
                     'type'        => 'select',
-					'description' => __( 'Select the Razorpay API Type from here. Legacy API will be officially deprecated by Razorpay on March 31, 2021.', 'rzp-woocommerce' ),
+					'description' => __( 'Select the Razorpay API Type from here. Legacy API will be officially deprecated by Razorpay on March 31, 2021. If you have created your Razorpay account before December 2020, you may need to use the legacy version.', 'rzp-woocommerce' ),
 					'desc_tip'    => false,
-                    'default'     => 'legacy',
+                    'default'     => 'standard',
                     'options'     => array(
 						'standard' => __( 'Standard API', 'rzp-woocommerce' ),
 						'legacy'   => __( 'Legacy API', 'rzp-woocommerce' ),

@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.1.8
+Release Date: June 10, 2023
+
+* WordPress tested upto v6.2.
+* WC Tested upto v7.8.
+
 ## 1.1.7
 Release Date: December 10, 2022
 

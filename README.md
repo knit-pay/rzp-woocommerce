@@ -74,19 +74,19 @@ Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/dis
 
 #### How to use webhook? What webhooks are supported? =
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at hello@sayandatta.in or https://www.sayandatta.in/contact/ as it needs custom developmet. 
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/ as it needs custom developmet. 
 
 #### How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 #### I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 #### I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 #### Is this plugin compatible with any themes?
 

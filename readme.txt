@@ -2,10 +2,10 @@
 Contributors: infosatech
 Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
 Requires at least: 4.6
-Tested up to: 6.1
-Stable tag: 1.1.7
+Tested up to: 6.2
+Stable tag: 1.1.8
 Requires PHP: 5.6
-Donate link: https://rzp.io/l/Bq3W5pr
+Donate link: https://www.sayandatta.co.in/donate
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -71,19 +71,19 @@ Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/dis
 
 = How to use webhook? What webhooks are supported? =
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at hello@sayandatta.in or https://www.sayandatta.in/contact/ as it needs custom developmet. 
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/ as it needs custom developmet. 
 
 = How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 = I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 = I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
 
-It needs custom developement. Please contact me at hello@sayandatta.in or https://sayandatta.in/contact/.
+It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
 
 = Is this plugin compatible with any themes? =
 
@@ -105,6 +105,12 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.1.8 =
+Release Date: June 10, 2023
+
+* WordPress tested upto v6.2.
+* WC Tested upto v7.8.
 
 = 1.1.7 =
 Release Date: December 10, 2022

@@ -3,14 +3,14 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.1.8
+ * Version: 1.1.9
  * Author: Sayan Datta
  * Author URI: https://www.sayandatta.co.in
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
  * WC requires at least: 2.4
- * WC tested up to: 7.8
+ * WC tested up to: 7.9
  * 
  * Razorpay Payment Links for WooCommerce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ final class RZPWC {
      *
      * @var string
      */
-    public $version = '1.1.8';
+    public $version = '1.1.9';
 
     /**
      * Minimum version of WordPress required to run RZPWC.
@@ -338,12 +338,12 @@ final class RZPWC {
             <?php
         }
     
-        $show_donate = true;
-        if ( $this->calculate_time() > strtotime( '-240 hours' )
-            || '1' === get_option( 'rzpwc_plugin_dismiss_donate_notice' )
-            || apply_filters( 'rzpwc_hide_sticky_donate_notice', false ) ) {
-            $show_donate = false;
-        }
+        $show_donate = false;
+        // if ( $this->calculate_time() > strtotime( '-15 days' )
+        //     || '1' === get_option( 'rzpwc_plugin_dismiss_donate_notice' )
+        //     || apply_filters( 'rzpwc_hide_sticky_donate_notice', false ) ) {
+        //     $show_donate = false;
+        // }
     
         if ( $show_donate ) {
             $dismiss = wp_nonce_url( add_query_arg( 'rzpwc_notice_action', 'dismiss_donate' ), 'rzpwc_notice_nonce' );

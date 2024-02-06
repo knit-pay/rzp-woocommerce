@@ -15,3 +15,5 @@ package-lock.json
 phpcs.xml
 README.md
 todo
+index.js
+webpack.config.js

@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.0
+Release Date: January 6, 2024
+
+* Added: Support for WooCommerce Block-based checkout.
+* WordPress tested up to v6.4.
+* WC Tested up to v8.6.
+
 ## 1.1.9
 Release Date: July 22, 2023
 

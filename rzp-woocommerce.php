@@ -3,14 +3,14 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.1.9
+ * Version: 1.2.0
  * Author: Sayan Datta
  * Author URI: https://www.sayandatta.co.in
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
  * WC requires at least: 2.4
- * WC tested up to: 7.9
+ * WC tested up to: 8.6
  * 
  * Razorpay Payment Links for WooCommerce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ final class RZPWC {
      *
      * @var string
      */
-    public $version = '1.1.9';
+    public $version = '1.2.0';
 
     /**
      * Minimum version of WordPress required to run RZPWC.
@@ -123,13 +123,13 @@ final class RZPWC {
         // Check WordPress version.
         if ( version_compare( get_bloginfo( 'version' ), $this->wordpress_version, '<' ) ) {
             /* translators: WordPress Version */
-            $this->messages[] = sprintf( esc_html__( 'You are using the outdated WordPress, please update it to version %s or higher.', 'upi-qr-code-payment-for-woocommerce' ), $this->wordpress_version );
+            $this->messages[] = sprintf( esc_html__( 'You are using the outdated WordPress, please update it to version %s or higher.', 'rzp-woocommerce' ), $this->wordpress_version );
         }
 
         // Check PHP version.
         if ( version_compare( phpversion(), $this->php_version, '<' ) ) {
             /* translators: PHP Version */
-            $this->messages[] = sprintf( esc_html__( 'Razorpay Payment Links for WooCommerce requires PHP version %s or above. Please update PHP to run this plugin.', 'upi-qr-code-payment-for-woocommerce' ), $this->php_version );
+            $this->messages[] = sprintf( esc_html__( 'Razorpay Payment Links for WooCommerce requires PHP version %s or above. Please update PHP to run this plugin.', 'rzp-woocommerce' ), $this->php_version );
         }
 
         if ( empty( $this->messages ) ) {
@@ -224,7 +224,8 @@ final class RZPWC {
 
         // Load payment gateway.
         add_action( 'plugins_loaded', [ $this, 'load_gateway' ] );
-
+        add_action( 'woocommerce_blocks_loaded', array( $this, 'block_support' ) );
+        
         // Load admin notices.
         add_action( 'admin_notices', [ $this, 'admin_notice' ] );
 		add_action( 'admin_init', [ $this, 'dismiss_notice' ] );
@@ -234,7 +235,7 @@ final class RZPWC {
 	 * Initialize plugin for localization.
 	 */
 	public function localization_setup() {
-		load_plugin_textdomain( 'upi-qr-code-payment-for-woocommerce', false, dirname( RZPWC_BASENAME ) . '/languages' ); 
+		load_plugin_textdomain( 'rzp-woocommerce', false, dirname( RZPWC_BASENAME ) . '/languages' ); 
 	}
 
     /**
@@ -299,6 +300,21 @@ final class RZPWC {
             require_once RZPWC_PATH . 'includes/class-payment.php';
         }
     }
+
+    /**
+	 * Registers WooCommerce Blocks integration.
+	 */
+	public function block_support() {
+		if ( class_exists( '\Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+            require_once RZPWC_PATH . 'includes/blocks/class-blocks-support.php';
+			add_action(
+				'woocommerce_blocks_payment_method_type_registration',
+				function( \Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+					$payment_method_registry->register( new RZP_WC_Payment_Gateway_Blocks_Support() );
+				}
+			);
+		}
+	}
 
 	/**
 	 * Show internal admin notices.

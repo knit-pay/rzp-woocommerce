@@ -2,8 +2,8 @@
 Contributors: infosatech
 Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
 Requires at least: 4.6
-Tested up to: 6.3
-Stable tag: 1.1.9
+Tested up to: 6.4
+Stable tag: 1.2.0
 Requires PHP: 5.6
 Donate link: https://www.sayandatta.co.in/donate
 License: GPLv3
@@ -106,44 +106,51 @@ Post detailed information about the issue in the [support forum](https://wordpre
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
 
+= 1.2.0 =
+Release Date: January 6, 2024
+
+* Added: Support for WooCommerce Block-based checkout.
+* WordPress tested up to v6.4.
+* WC Tested up to v8.6.
+
 = 1.1.9 =
 Release Date: July 22, 2023
 
-* WordPress tested upto v6.3.
-* WC Tested upto v7.9.
+* WordPress tested up to v6.3.
+* WC Tested up to v7.9.
 
 = 1.1.8 =
 Release Date: June 10, 2023
 
-* WordPress tested upto v6.2.
-* WC Tested upto v7.8.
+* WordPress tested up to v6.2.
+* WC Tested up to v7.8.
 
 = 1.1.7 =
 Release Date: December 10, 2022
 
 * Tweak: Default API is now set as Standard Mode.
-* WordPress tested upto v6.1.
-* WC Tested upto v7.1.
+* WordPress tested up to v6.1.
+* WC Tested up to v7.1.
 
 = 1.1.6 =
 Release Date: July 15, 2022
 
 * Improved: Code Quality.
-* WordPress tested upto v6.0.
-* WC Tested upto v6.7.
+* WordPress tested up to v6.0.
+* WC Tested up to v6.7.
 
 = 1.1.5 =
 Release Date: July 25, 2021
 
 * Improved: Localhost check.
 * Support for old WC Version (2.0 to 3.1)
-* WC Tested upto v5.5 and v5.6.
+* WC Tested up to v5.5 and v5.6.
 
 = 1.1.4 =
 Release Date: June 16, 2021
 
 * Added: Order Number instead of Order ID.
-* WC Tested upto v5.4.
+* WC Tested up to v5.4.
 
 = 1.1.3 =
 Release Date: May 23, 2021
@@ -159,20 +166,20 @@ Release Date: January 11, 2021
 = 1.1.1 =
 Release Date: December 14, 2020
 
-* WordPress tested upto v5.6.
-* WC Tested upto v4.8.
+* WordPress tested up to v5.6.
+* WC Tested up to v4.8.
 
 = 1.1.0 =
 Release Date: November 7, 2020
 
 * Fixed: Partial refund from Razorpay Dashbaord causing multiple refund events.
-* WC Tested upto v4.6.
+* WC Tested up to v4.6.
 
 = 1.0.9 =
 Release Date: August 15, 2020
 
 * Fixed: Webhook Issue.
-* WC Tested upto v4.4.
+* WC Tested up to v4.4.
 
 = 1.0.8 =
 Release Date: July 24, 2020
@@ -182,14 +189,14 @@ Release Date: July 24, 2020
 = 1.0.7 =
 Release Date: July 20, 2020
 
-* WC Tested upto v4.3.
+* WC Tested up to v4.3.
 
 = 1.0.6 =
 Release Date: June 9, 2020
 
 * Tweak: Cart will not be cleared if payment is not actually made.
 * Fixed: Redirection issue.
-* WC Tested upto v4.2.0
+* WC Tested up to v4.2.0
 
 = 1.0.5 =
 Release Date: May 24, 2020

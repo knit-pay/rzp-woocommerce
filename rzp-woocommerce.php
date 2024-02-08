@@ -3,7 +3,7 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Sayan Datta
  * Author URI: https://www.sayandatta.co.in
  * License: GPLv3
@@ -48,7 +48,7 @@ final class RZPWC {
      *
      * @var string
      */
-    public $version = '1.2.0';
+    public $version = '1.2.1';
 
     /**
      * Minimum version of WordPress required to run RZPWC.
@@ -335,7 +335,7 @@ final class RZPWC {
         }
 
         $show_rating = true;
-        if ( $this->calculate_time() > strtotime( '-10 days' )
+        if ( $this->calculate_time() > strtotime( '-7 days' )
             || '1' === get_option( 'rzpwc_plugin_dismiss_rating_notice' )
             || apply_filters( 'rzpwc_hide_sticky_rating_notice', false ) ) {
             $show_rating = false;
@@ -354,12 +354,12 @@ final class RZPWC {
             <?php
         }
     
-        $show_donate = false;
-        // if ( $this->calculate_time() > strtotime( '-15 days' )
-        //     || '1' === get_option( 'rzpwc_plugin_dismiss_donate_notice' )
-        //     || apply_filters( 'rzpwc_hide_sticky_donate_notice', false ) ) {
-        //     $show_donate = false;
-        // }
+        $show_donate = true;
+        if ( $this->calculate_time() > strtotime( '-10 days' )
+            || '1' === get_option( 'rzpwc_plugin_dismiss_donate_notice' )
+            || apply_filters( 'rzpwc_hide_sticky_donate_notice', false ) ) {
+            $show_donate = false;
+        }
     
         if ( $show_donate ) {
             $dismiss = wp_nonce_url( add_query_arg( 'rzpwc_notice_action', 'dismiss_donate' ), 'rzpwc_notice_nonce' );
@@ -381,14 +381,14 @@ final class RZPWC {
 	public function dismiss_notice() {
 		// Check for Rating Notice
         if ( get_option( 'rzpwc_plugin_no_thanks_rating_notice' ) === '1'
-            && get_option( 'rzpwc_plugin_dismissed_time' ) <= strtotime( '-14 days' ) ) {
+            && get_option( 'rzpwc_plugin_dismissed_time' ) <= strtotime( '-10 days' ) ) {
             delete_option( 'rzpwc_plugin_dismiss_rating_notice' );
             delete_option( 'rzpwc_plugin_no_thanks_rating_notice' );
         }
 
         // Check for Donate Notice
         if ( get_option( 'rzpwc_plugin_no_thanks_donate_notice' ) === '1'
-            && get_option( 'rzpwc_plugin_dismissed_time_donate' ) <= strtotime( '-15 days' ) ) {
+            && get_option( 'rzpwc_plugin_dismissed_time_donate' ) <= strtotime( '-14 days' ) ) {
             delete_option( 'rzpwc_plugin_dismiss_donate_notice' );
             delete_option( 'rzpwc_plugin_no_thanks_donate_notice' );
         }

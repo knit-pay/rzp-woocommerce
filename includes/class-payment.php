@@ -31,7 +31,25 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
      * @var WC_Logger
      */
     public static $log = false;
-    
+
+    protected $thank_you;
+    protected $api_type;
+    protected $test_mode;
+    protected $key_id;
+    protected $key_secret;
+    protected $webhook_enabled;
+    protected $webhook_secret;
+    protected $sms_notification;
+    protected $email_notification;
+    protected $reminder;
+    protected $link_expire;
+    protected $gateway_fee;
+    protected $instant_refund;
+    protected $debug;
+    protected $api_mode;
+    protected $ref;
+    protected $status;
+
     /**
      * Class constructor
         */
@@ -59,9 +77,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         $this->description = $this->get_option( 'description' );
         $this->thank_you = $this->get_option( 'thank_you' );
         $this->api_type = $this->get_option( 'api_type', 'legacy' );
-        $this->testmode = 'yes' === $this->get_option( 'testmode' );
-        $this->key_id = $this->testmode ? $this->get_option( 'test_key_id' ) : $this->get_option( 'key_id' );
-        $this->key_secret = $this->testmode ? $this->get_option( 'test_key_secret' ) : $this->get_option( 'key_secret' );
+        $this->test_mode = 'yes' === $this->get_option( 'testmode' );
+        $this->key_id = $this->test_mode ? $this->get_option( 'test_key_id' ) : $this->get_option( 'key_id' );
+        $this->key_secret = $this->test_mode ? $this->get_option( 'test_key_secret' ) : $this->get_option( 'key_secret' );
         $this->webhook_enabled = $this->get_option( 'webhook_enabled' );
         $this->webhook_secret = $this->get_option( 'webhook_secret' );
         $this->sms_notification = $this->get_option( 'sms_notification' );
@@ -73,7 +91,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         $this->debug = 'yes' === $this->get_option( 'debug_mode', 'no' );
         self::$log_enabled = $this->debug;
 
-        if ( $this->testmode ) {
+        if ( $this->test_mode ) {
             $this->title .= ' ' . __( '(Test Mode)', 'rzp-woocommerce' );
             /* translators: %s: Link to Razorpay testing guide page */
             $this->description .= ' ' . sprintf( __( 'TESTING MODE ENABLED. You can use Razorpay testing accounts only. See the <a href="%s" target="_blank">Razorpay Testing Guide</a> for more details.', 'rzp-woocommerce' ), 'https://razorpay.com/docs/payment-gateway/test-card-details/' );
@@ -427,7 +445,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
             $args['expire_by'] = time() + ( absint( $held_duration ) * 60 ); 
         } 
 
-        $args = apply_filters( 'rzpwc_payment_init_payload', $args, $order, $this->testmode );
+        $args = apply_filters( 'rzpwc_payment_init_payload', $args, $order, $this->test_mode );
 
         $this->log( 'Data sent for creating Payment Link: ' . wc_print_r( $args, true ) );
 
@@ -497,7 +515,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
     public function can_refund_order( $order ) {
         $has_api_creds = false;
 
-        if ( $this->testmode ) {
+        if ( $this->test_mode ) {
             $has_api_creds = $this->get_option( 'test_key_id' ) && $this->get_option( 'test_key_secret' );
         } else {
             $has_api_creds = $this->get_option( 'key_id' ) && $this->get_option( 'key_secret' );

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 1.2.1
+Release Date: January 8, 2024
+
+* Tweak: PHP 8.3 Support.
+
 ## 1.2.0
 Release Date: January 6, 2024
 

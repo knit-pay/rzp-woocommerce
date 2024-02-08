@@ -3,7 +3,7 @@ Contributors: infosatech
 Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
 Requires at least: 4.6
 Tested up to: 6.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 Requires PHP: 5.6
 Donate link: https://www.sayandatta.co.in/donate
 License: GPLv3
@@ -21,6 +21,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 
 #### Plugin Features
 
+* WooCommerce High-Performance Order Storage (HPOS) Support.
 * Collect Payments using Razorpay Payment Links.
 * Ability to send Payment Links via SMS and Email notification to customers.
 * One time Payment for your website.
@@ -32,7 +33,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Easily Collect Gateway Fees from Customer.
 * Ability to send Payment Reminder automatically.
 * Secure Payment Capture Mechanism.
-* 92 [Razorpay Currency](https://razorpay.com/docs/international-payments/#supported-currencies) Support.
+* 94 [Razorpay Currency](https://razorpay.com/docs/international-payments/#supported-currencies) Support.
 * Order note for every Transaction related process.
 * Detailed Payment process Log via WooCommerce Logger.
 * Lots of filters available to customize the output.
@@ -41,7 +42,7 @@ Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star r
 
 #### Compatibility
 
-* This plugin is fully compatible with WordPress Version 4.6 and WooCommerce v3.1.0 and beyond and also compatible with any WordPress theme.
+* This plugin is fully compatible with WordPress Version 4.6 and beyond and also compatible with any WordPress theme.
 
 #### Support
 * Community support via the [support forums](https://wordpress.org/support/plugin/rzp-woocommerce) at WordPress.org.
@@ -105,6 +106,11 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.2.1 =
+Release Date: January 8, 2024
+
+* Tweak: PHP 8.3 Support.
 
 = 1.2.0 =
 Release Date: January 6, 2024

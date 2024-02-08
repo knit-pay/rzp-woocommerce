@@ -1,6 +1,6 @@
 {
 	"name": "rzp-woocommerce",
-	"title": "UPI QR Code Payment Gateway for WooCommerce",
+	"title": "Razorpay Payment Links for WooCommerce",
 	"version": "1.0.0",
 	"author": "Sayan Datta",
 	"license": "GPL-3.0+",

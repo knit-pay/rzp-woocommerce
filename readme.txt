@@ -47,8 +47,8 @@ Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star r
 * Community support via the [support forums](https://wordpress.org/support/plugin/rzp-woocommerce) at WordPress.org.
 
 #### Contribute
-* Active development of this plugin is handled [on GitHub](https://github.com/iamsayan/rzp-woocommerce).
-* Feel free to [fork the project on GitHub](https://github.com/iamsayan/rzp-woocommerce) and submit your contributions via pull request.
+* Active development of this plugin is handled [on GitHub](https://github.com/knit-pay/rzp-woocommerce).
+* Feel free to [fork the project on GitHub](https://github.com/knit-pay/rzp-woocommerce) and submit your contributions via pull request.
 
 == Installation ==
 
@@ -71,19 +71,19 @@ Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/dis
 
 = How to use webhook? What webhooks are supported? =
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/ as it needs custom developmet. 
+Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development. 
 
 = How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
 
-It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
+It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
 
 = I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
 
-It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
+It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
 
 = I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
 
-It needs custom developement. Please contact me at iamsayan@protonmail.com or https://www.sayandatta.co.in/contact/.
+It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
 
 = Is this plugin compatible with any themes? =
 
@@ -91,7 +91,7 @@ Yes, this plugin is compatible with any theme.
 
 = The plugin isn't working or have a bug? =
 
-Post detailed information about the issue in the [support forum](https://wordpress.org/support/plugin/rzp-woocommerce) and I will work to fix it.
+Post detailed information about the issue in the [support forum](https://wordpress.org/support/plugin/rzp-woocommerce) and we will work to fix it.
 
 == Screenshots ==
 
@@ -105,6 +105,11 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 1.2.2 =
+Release Date: March 13, 2024
+
+* Plugin ownership transferred from Sayan Datta to Knit Pay (Logic Bridge Techno Mart LLP).
 
 = 1.2.1 =
 Release Date: January 8, 2024

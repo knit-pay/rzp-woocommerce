@@ -3,9 +3,9 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 1.2.1
- * Author: Sayan Datta
- * Author URI: https://www.sayandatta.co.in
+ * Version: 1.2.2
+ * Author: KnitPay
+ * Author URI: https://www.knitpay.org/
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
@@ -27,7 +27,7 @@
  * 
  * @category WooCommerce
  * @package  Razorpay Payment Links for WooCommerce
- * @author   Sayan Datta <iamsayan@protonmail.com>
+ * @author   KnitPay
  * @license  http://www.gnu.org/licenses/ GNU General Public License
  * @link     https://wordpress.org/plugins/rzp-woocommerce/
  *
@@ -253,7 +253,7 @@ final class RZPWC {
 		$more = [
             '<a href="https://wordpress.org/support/plugin/rzp-woocommerce/" target="_blank">' . esc_html__( 'Support', 'rzp-woocommerce' ) . '</a>',
             '<a href="https://wordpress.org/plugins/rzp-woocommerce/#faq" target="_blank">' . esc_html__( 'FAQ', 'rzp-woocommerce' ) . '</a>',
-            '<a href="https://www.sayandatta.co.in/donate" target="_blank">' . esc_html__( 'Donate', 'rzp-woocommerce' ) . '</a>',
+            //'<a href="https://www.sayandatta.co.in/donate" target="_blank">' . esc_html__( 'Donate', 'rzp-woocommerce' ) . '</a>',
         ];
 
 		return array_merge( $links, $more );
@@ -354,7 +354,7 @@ final class RZPWC {
             <?php
         }
     
-        $show_donate = true;
+        $show_donate = false;
         if ( $this->calculate_time() > strtotime( '-10 days' )
             || '1' === get_option( 'rzpwc_plugin_dismiss_donate_notice' )
             || apply_filters( 'rzpwc_hide_sticky_donate_notice', false ) ) {

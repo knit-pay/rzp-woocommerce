@@ -4,7 +4,7 @@
  *
  * @package    Razorpay Payment Links for WooCommerce
  * @subpackage Includes
- * @author     Sayan Datta
+ * @author     KnitPay
  * @license    http://www.gnu.org/licenses/ GNU General Public License
  */
 

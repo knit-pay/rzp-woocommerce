@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Sayan Datta
+# Copyright (C) 2022 KnitPay
 # This file is distributed under the GPLv3.
 msgid ""
 msgstr ""

@@ -2,7 +2,7 @@
 	"name": "rzp-woocommerce",
 	"title": "Razorpay Payment Links for WooCommerce",
 	"version": "1.0.0",
-	"author": "Sayan Datta",
+	"author": "KnitPay",
 	"license": "GPL-3.0+",
 	"keywords": [],
 	"engines": {

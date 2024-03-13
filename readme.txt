@@ -1,11 +1,10 @@
 === Razorpay Payment Links for WooCommerce ===
-Contributors: infosatech
-Tags: razorpay, qrcode, upi, woocommerce, debit card, credit card
+Contributors: knitpay, gautammkgarg, infosatech
+Tags: razorpay, qrcode, upi, woocommerce, payments,
 Requires at least: 4.6
 Tested up to: 6.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 Requires PHP: 5.6
-Donate link: https://www.sayandatta.co.in/donate
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 

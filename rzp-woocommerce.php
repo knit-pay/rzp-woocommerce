@@ -11,6 +11,7 @@
  * Domain Path: /languages
  * WC requires at least: 2.4
  * WC tested up to: 8.6
+ * Requires Plugins: woocommerce
  * 
  * Razorpay Payment Links for WooCommerce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,6 +112,9 @@ final class RZPWC {
 
         // Loaded action.
         do_action( 'rzpwc_loaded' );
+
+        // Get Razorpay Connect Link.
+        add_action( 'wp_ajax_rzp_woocommerce_connect_link', [ $this, 'ajax_rzp_woocommerce_connect_link' ] );
     }
 
     /**
@@ -433,6 +437,52 @@ final class RZPWC {
             update_option( 'rzpwc_plugin_installed_time', $installed_time );
         }
         return $installed_time;
+	}
+
+	/*
+	 * Generate Razorpay Connect Link.
+	 */
+	public function ajax_rzp_woocommerce_connect_link(){
+	    if ( ! current_user_can( 'manage_options' ) ) {
+	        return;
+	    }
+
+	    $rand         = \sanitize_text_field( $_GET['rand'] );
+	    $nonce_action = "rzp_woocommerce_connect_link|{$rand}";
+
+	    $mode = \sanitize_text_field( $_GET['mode'] );
+
+	    if ( ! wp_verify_nonce( \sanitize_text_field( $_GET['rzp_woocommerce_nonce'] ), $nonce_action ) ) {
+	        wp_send_json_error( __( 'Nonce Missmatch!', 'rzp-woocommerce' ) );
+	    }
+
+	    if ("connect" === \sanitize_text_field($_GET['rzp_woocommerce_connect_action'])){
+    	    $response = wp_remote_post(
+    	        RZP_WC_Payment_Gateway::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+    	        [
+    	            'body'    => [
+    	                'admin_url'  => rawurlencode( admin_url() ),
+    	                'action'     => 'connect',
+    	                'gateway_id' => 'rzp-woocommerce',
+    	                'mode'       => $mode,
+    	            ],
+    	            'timeout' => 60,
+    	        ]
+    	        );
+    	    $result   = wp_remote_retrieve_body( $response );
+    	    $result   = json_decode( $result );
+    	    if ( isset( $result->error ) ) {
+    	        echo $result->error;
+    	        exit;
+    	    }
+    	    if ( isset( $result->return_url ) ) {
+    	        set_transient( 'rzp_woocommerce_connect_mode', $mode, HOUR_IN_SECONDS );
+
+    	        wp_send_json_success([
+    	            'rzp_woocommerce_connect_url' =>  add_query_arg( 'redirect_uri', RZP_WC_Payment_Gateway::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL, $result->return_url )
+    	           ] );
+    	    }
+	    }
 	}
 }
 

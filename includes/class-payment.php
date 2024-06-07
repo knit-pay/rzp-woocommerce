@@ -37,8 +37,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
     protected $test_mode;
     protected $key_id;
     protected $key_secret;
+    protected $access_token;
+    protected $refresh_token;
     protected $webhook_enabled;
     protected $webhook_secret;
+    protected $expires_at;
     protected $sms_notification;
     protected $email_notification;
     protected $reminder;
@@ -49,6 +52,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
     protected $api_mode;
     protected $ref;
     protected $status;
+
+    const KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL = 'https://razorpay-connect.knitpay.org/';
+    const RENEWAL_TIME_BEFORE_TOKEN_EXPIRE       = 15 * MINUTE_IN_SECONDS; // 15 minutes.
 
     /**
      * Class constructor
@@ -78,8 +84,12 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         $this->thank_you = $this->get_option( 'thank_you' );
         $this->api_type = $this->get_option( 'api_type', 'legacy' );
         $this->test_mode = 'yes' === $this->get_option( 'testmode' );
-        $this->key_id = $this->test_mode ? $this->get_option( 'test_key_id' ) : $this->get_option( 'key_id' );
-        $this->key_secret = $this->test_mode ? $this->get_option( 'test_key_secret' ) : $this->get_option( 'key_secret' );
+        $setting_prefix = $this->test_mode? 'test_':'';
+        $this->key_id = $this->get_option( $setting_prefix . 'key_id' );
+        $this->key_secret = $this->get_option( $setting_prefix . 'key_secret' ) ;
+        $this->access_token = $this->get_option( $setting_prefix . 'access_token' ) ;
+        $this->refresh_token = $this->get_option( $setting_prefix . 'refresh_token' ) ;
+        $this->expires_at = $this->get_option( $setting_prefix . 'expires_at' ) ;
         $this->webhook_enabled = $this->get_option( 'webhook_enabled' );
         $this->webhook_secret = $this->get_option( 'webhook_secret' );
         $this->sms_notification = $this->get_option( 'sms_notification' );
@@ -113,7 +123,14 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         } else {
             add_action( 'woocommerce_update_options_payment_gateways', array( $this, 'process_admin_options' ) );
         }
+
+        // Connection Redirect Listener.
+        self::update_connection_status();
         
+        // Schedule next refresh token if not done before.
+        self::schedule_next_refresh_access_token( 'test', $this->get_option( 'test_expires_at' ) );
+        self::schedule_next_refresh_access_token( 'live', $this->get_option( 'expires_at' )  );
+
         // verify payment from redirection
         add_action( 'woocommerce_api_rzp-payment', array( $this, 'capture_payment' ) );
 
@@ -131,6 +148,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
         // change wc payment link if exists razorpay link
         add_filter( 'woocommerce_get_checkout_payment_url', array( $this, 'custom_checkout_url' ), 10, 2 );
+
+        // Get new access token if it's about to get expired.
+        add_action( 'rzp_woocommerce_refresh_access_token', [ $this, 'refresh_access_token' ], 10, 1 );
 
         if ( ! $this->is_valid_for_use() ) {
             $this->enabled = 'no';
@@ -161,6 +181,15 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
      */
     public function process_admin_options() {
         $saved = parent::process_admin_options();
+
+        // Take action if Connect/Disconnect button is clicked..
+        $rzp_woocommerce_connect_action = array_key_exists('rzp-woocommerce-connect-action', $_POST) ? \sanitize_text_field( $_POST['rzp-woocommerce-connect-action']):'';
+        $rzp_woocommerce_connect_mode = array_key_exists('rzp-woocommerce-connect-mode', $_POST) ? \sanitize_text_field($_POST['rzp-woocommerce-connect-mode']):"";
+        if ( "connect" === $rzp_woocommerce_connect_action){
+            return $this->connect($rzp_woocommerce_connect_mode);
+        } elseif ("disconnect" === $rzp_woocommerce_connect_action){
+            return $this->clear_config( $rzp_woocommerce_connect_mode );
+        }
 
         // auto enable webhook
         $this->auto_enable_webhook();
@@ -218,6 +247,17 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
      * Initialise Gateway Settings Form Fields.
      */
     public function init_form_fields() {
+        // Show only connect button if not connected.
+        $test_access_token = $this->get_option( 'test_access_token' ) ;
+        $live_access_token = $this->get_option( 'access_token' ) ;
+        if (empty($test_access_token) && empty($live_access_token)){
+            $this->form_fields = array(
+                'razorpay_connect_button' => array(
+                    'type'         => 'razorpay_connect_button',
+                ),
+                );
+            return;
+        }
 
         $this->form_fields = array(
             'enabled'            => array(
@@ -227,6 +267,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
                 'description' => __( 'Enable Razorpay Payment Gateway for this website.', 'rzp-woocommerce' ),
                 'default'     => 'yes',
                 'desc_tip'    => false,
+            ),
+            'razorpay_connect_button' => array(
+                'type'         => 'razorpay_connect_button',
             ),
             'title'              => array(
                 'title'       => __( 'Title:', 'rzp-woocommerce' ),
@@ -265,36 +308,12 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
                     'legacy'   => __( 'Legacy API', 'rzp-woocommerce' ),
                 ),
             ),
-            'key_id'             => array(
-                'title'       => __( 'Live Client API Key:', 'rzp-woocommerce' ),
-                'type'        => 'text',
-                'description' => __( 'The key Id can be generated from "API Keys" section of Razorpay Dashboard. Use live key for live mode.', 'rzp-woocommerce' ),
-                'desc_tip'    => false,
-            ),
-            'key_secret'         => array(
-                'title'       => __( 'Live Client Secret Key:', 'rzp-woocommerce' ),
-                'type'        => 'password',
-                'description' => __( 'The key secret can be generated from "API Keys" section of Razorpay Dashboard. Use live secret for live mode.', 'rzp-woocommerce' ),
-                'desc_tip'    => false,
-            ),
             'testmode'           => array(
                 'title'       => __( 'Test Mode:', 'rzp-woocommerce' ),
                 'label'       => __( 'Enable Test Mode', 'rzp-woocommerce' ),
                 'type'        => 'checkbox',
                 'description' => __( 'Run the Razorpay Payment Gateway in test mode.', 'rzp-woocommerce' ),
                 'default'     => 'yes',
-                'desc_tip'    => false,
-            ),
-            'test_key_id'        => array(
-                'title'       => __( 'Test Client API Key:', 'rzp-woocommerce' ),
-                'type'        => 'text',
-                'description' => __( 'The key Id can be generated from "API Keys" section of Razorpay Dashboard. Use test key for test mode.', 'rzp-woocommerce' ),
-                'desc_tip'    => false,
-            ),
-            'test_key_secret'    => array(
-                'title'       => __( 'Test Client Secret Key:', 'rzp-woocommerce' ),
-                'type'        => 'password',
-                'description' => __( 'The key secret can be generated from "API Keys" section of Razorpay Dashboard. Use test secret for test mode.', 'rzp-woocommerce' ),
                 'desc_tip'    => false,
             ),
             'webhook_details'    => array(
@@ -422,8 +441,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
             'sms_notify'      => ( $this->sms_notification === 'yes' ) ? 1 : 0,
             'email_notify'    => ( $this->email_notification === 'yes' ) ? 1 : 0,
             'notes'           => array_merge( $this->get_wc_customer_info( $order ), array(
-                'woocommerce_order_id'     => $order_id,
-                'woocommerce_order_number' => $order->get_order_number(),
+                'wc_order_id'     => $order_id,
+                'wc_order_number' => $order->get_order_number(),
+                'knitpay_extension'        => 'rzp-wc',
+                'rzp_wc_version'           => RZPWC_VERSION,
+                'php_version'              => PHP_VERSION,
             ) ),
             'callback_url'    => trailingslashit( get_home_url( null, 'wc-api/rzp-payment' ) ),
             'callback_method' => 'get',
@@ -559,8 +581,8 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
         // add notes to array
         $args['notes']['comment'] = ! empty( $reason ) ? $reason : __( 'No reason specified!', 'rzp-woocommerce' );
-        $args['notes']['woocommerce_order_id'] = $order->get_id();
-        $args['notes']['woocommerce_order_number'] = $order->get_order_number();
+        $args['notes']['wc_order_id'] = $order->get_id();
+        $args['notes']['wc_order_number'] = $order->get_order_number();
         $args['notes']['refund_from_website'] = true;
         $args['notes']['source'] = 'woocommerce';
 
@@ -629,10 +651,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         }
 
         $ref = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_' . $this->ref ] ) );
-        $id = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_id' ] ) );
-        $status = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_status' ] ) );
         $payment_id = sanitize_text_field( wp_unslash( $_GET['razorpay_payment_id'] ) );
-        $signature = sanitize_text_field( wp_unslash( $_GET['razorpay_signature'] ) );
 
         // get wc order id
         $order_id = wc_get_order_id_by_order_key( $ref );
@@ -648,46 +667,41 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
             exit;
         }
 
-        // load get data
-        //$signature_payload = esc_attr( $_GET[ 'razorpay_'.$this->api_mode.'_id' ] ) . '|' . esc_attr( $_GET[ 'razorpay_'.$this->api_mode.'_'.$this->ref ] ) . '|' . esc_attr( $_GET[ 'razorpay_'.$this->api_mode.'_status' ] ) . '|' . esc_attr( $_GET['razorpay_payment_id'] );
+        // make api request
+        $response = $this->api_data( 'payments/' . $payment_id, null, 'GET' );
 
-        $signature_payload = join( '|', compact( 'id', 'ref', 'status', 'payment_id' ) );
+        if ( is_wp_error( $response ) ) {
+            $this->log( 'Error Occured while fetching payment.' );
 
-        $this->log( "Payload: $signature_payload" );
+            // update the order status
+            $order->update_status( 'failed' );
+        } elseif ( $this->id === $order->get_payment_method() && true === $order->needs_payment() ) {
+            $body = json_decode( wp_remote_retrieve_body( $response ), true );
+            if($order_id !== intval($body['notes']['wc_order_id'])){
+                $this->log( 'Order ID mismatch!' );
 
-        // generate hash
-        $expected_signature = hash_hmac( 'sha256', $signature_payload, $this->key_secret );
+                // update the order status
+                $order->update_status( 'failed' );
+            }
 
-        $this->log( "Original Signature: " . $signature );
-        $this->log( "Generated Signature: $expected_signature" );
-
-        // match signatures
-        if ( hash_equals( $expected_signature, $signature ) ) {
-            $this->log( 'Original and Generated Signature matched.' );
-            
-            // check order info
-            if ( $this->id === $order->get_payment_method() && true === $order->needs_payment() ) {
+            if ('authorized' === $body['status'] || 'captured' === $body['status']){
                 // update the payment reference
                 $order->payment_complete( $payment_id );
-                
+
                 // reduce stock
                 wc_reduce_stock_levels( $order->get_id() );
-                
+
                 // add some order notes
                 $order->add_order_note( __( 'Payment is Successful against this order.<br/>Transaction ID: ', 'rzp-woocommerce' ) . $payment_id, false );
-            
+
                 // remove old payment link
                 $order->delete_meta_data( '_rzp_payment_url' );
                 $order->save();
 
                 $this->log( 'Order marked as paid successfully. Redirecting...' );
             }
-        } else {
-            $this->log( 'Original and Generated Signature mismatched. Transaction verfication failed!' );
-
-            // update the order status
-            $order->update_status( 'failed' );
         }
+
         // create redirect
         wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
         exit;
@@ -816,7 +830,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         // get payloads
         $rzp_payment_id = $data['payload']['payment']['entity']['id'];
         $rzp_status = $data['payload']['payment']['entity']['status'];
-        $wc_order_id = $data['payload']['payment']['entity']['notes']['woocommerce_order_id'];
+        $wc_order_id = $data['payload']['payment']['entity']['notes']['wc_order_id'];
         $order = wc_get_order( absint( $wc_order_id ) );
         
         // check if it an order
@@ -846,7 +860,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         $refund_amount = (int) round( ( $data['payload']['refund']['entity']['amount'] / 100 ), 2 );
         $refund_reason = $data['payload']['refund']['entity']['notes']['comment'];
 
-        $wc_order_id = $data['payload']['payment']['entity']['notes']['woocommerce_order_id'];
+        $wc_order_id = $data['payload']['payment']['entity']['notes']['wc_order_id'];
         $order = wc_get_order( absint( $wc_order_id ) );
         $refund_ids = maybe_unserialize( $order->get_meta( '_rzp_refund_ids', true ) );
         if ( empty( $refund_ids ) ) $refund_ids = array();
@@ -980,9 +994,23 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         // api url
         $api_endpoint = 'https://api.razorpay.com/v1/' . $url;
 
-        $this->log( "Key ID: $this->key_id | Key Secret: $this->key_secret" );
-    
-        $auth = base64_encode( $this->key_id . ':' . $this->key_secret );
+        if ( empty( $this->access_token ) ) {
+            $auth = 'Basic ' . base64_encode( $this->key_id . ':' . $this->key_secret );
+        }else {
+            $access_token = $this->access_token;
+
+            // Refresh Access Token if already expired.
+            if ( time() >= $this->expires_at ) {
+                $mode = 'yes' === $this->get_option( 'testmode' )?'test':'live';
+                $setting_prefix = 'test' === $mode? 'test_':'';
+
+                $this->refresh_access_token( $mode );
+                $this->init_settings();
+                $access_token = $this->get_option( $setting_prefix . 'access_token' );
+            }
+
+            $auth = 'Bearer ' . $access_token;
+        }
         
         if ( ! is_null( $data ) && is_array( $data ) ) {
             $data = wp_json_encode( $data );
@@ -996,7 +1024,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
             'method'  => $method,
             'headers' => array(
                 'Content-Type'  => 'application/json',
-                'Authorization' => "Basic $auth",
+                'Authorization' => $auth,
             ),
         )
         );
@@ -1051,5 +1079,292 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
         }
 
         return $order->get_order_currency();
+    }
+
+    private function connect( $mode ) {
+        // Clear Old config before creating new connection.
+        $this->clear_config( $mode );
+
+        $response = wp_remote_post(
+            self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+            [
+                'body'    => [
+                    'admin_url'  => rawurlencode( admin_url() ),
+                    'action'     => 'connect',
+                    'gateway_id' => 'rzp-woocommerce',
+                    'mode'       => $mode,
+                ],
+                'timeout' => 60,
+            ]
+            );
+        $result   = wp_remote_retrieve_body( $response );
+        $result   = json_decode( $result );
+        if ( isset( $result->error ) ) {
+            echo $result->error;
+            exit;
+        }
+        if ( isset( $result->return_url ) ) {
+            $return_url_components = wp_parse_url($result->return_url);
+
+            wp_parse_str($return_url_components['query'], $return_url_params);
+
+            // Saving current Mode, This mode will be used in update_connection_status function
+            set_transient( 'rzp_woocommerce_connect_mode_' . $return_url_params['state'], $mode, HOUR_IN_SECONDS );
+
+            add_filter( 'allowed_redirect_hosts', function ( $hosts ) {
+                $hosts[] = 'auth.razorpay.com';
+                return $hosts;
+            });
+            wp_safe_redirect( add_query_arg( 'redirect_uri', self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL, $result->return_url ) );
+            exit;
+        }
+    }
+
+    public static function update_connection_status() {
+        if ( ! ( filter_has_var( INPUT_GET, 'razorpay_connect_status' ) && current_user_can( 'manage_options' ) ) ) {
+            return;
+        }
+
+        $code                    = isset( $_GET['code'] ) ? sanitize_text_field( $_GET['code'] ) : null;
+        $state                   = isset( $_GET['state'] ) ? sanitize_text_field( $_GET['state'] ) : null;
+        $gateway_id              = isset( $_GET['gateway_id'] ) ? sanitize_text_field( $_GET['gateway_id'] ) : null;
+        $razorpay_connect_status = isset( $_GET['razorpay_connect_status'] ) ? sanitize_text_field( $_GET['razorpay_connect_status'] ) : null;
+
+        if (empty($state)){
+            self::redirect_to_config(  );
+        }elseif ( empty( $code ) || 'failed' === $razorpay_connect_status ) {
+            $mode = get_transient( 'rzp_woocommerce_connect_mode_' . $state );
+            self::clear_config( $mode );
+            self::redirect_to_config(  );
+        }
+
+        // Fetch mode which was set in Connect function.
+        $mode = get_transient( 'rzp_woocommerce_connect_mode_' . $state );
+
+        // GET keys.
+        $response = wp_remote_post(
+        self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+            [
+            'body'    => [
+            'code'       => $code,
+            'state'      => $state,
+            'gateway_id' => $gateway_id,
+            'action'     => 'get-keys',
+            ],
+            'timeout' => 120,
+            ]
+        );
+        $result   = wp_remote_retrieve_body( $response );
+        $result   = json_decode( $result );
+
+        if ( JSON_ERROR_NONE !== json_last_error() ) {
+            self::redirect_to_config(  );
+            return;
+        }
+
+        // Don't refresh before 1 minute.
+        set_transient( 'rzp_woocommerce_refreshing_access_token_' . $mode, true, MINUTE_IN_SECONDS );
+
+        self::save_token( $result, $mode, true );
+
+        self::redirect_to_config(  );
+    }
+
+    private static function redirect_to_config( ) {
+        wp_safe_redirect( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) );
+        exit;
+    }
+
+    public function refresh_access_token( $mode ) {
+        // Don't refresh again if already refreshing.
+        if ( get_transient( 'rzp_woocommerce_refreshing_access_token_' . $mode ) ) {
+            return;
+        }
+        set_transient( 'rzp_woocommerce_refreshing_access_token_' . $mode, true, MINUTE_IN_SECONDS );
+
+        $setting_prefix = 'test' === $mode? 'test_':'';
+        $key_secret = $this->get_option( $setting_prefix . 'key_secret' ) ;
+        $refresh_token = $this->get_option( $setting_prefix . 'refresh_token' ) ;
+        $merchant_id = $this->get_option( $setting_prefix . 'merchant_id' ) ;
+        $expires_at = $this->get_option( $setting_prefix . 'expires_at' ) ;
+
+        // Don't proceed further if it's API key connection.
+        if ( ! empty( $key_secret ) && empty( $refresh_token ) ) {
+            return;
+        }
+
+        if ( empty( $refresh_token ) ) {
+            // Clear All configurations if Refresh Token is missing.
+            self::clear_config( $mode );
+            return;
+        }
+
+        // GET keys.
+        $response = wp_remote_post(
+        self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+            [
+                'body'    => [
+                    'refresh_token' => $refresh_token,
+                    'merchant_id'   => $merchant_id,
+                    'mode'          => $mode,
+                    'action'        => 'refresh-access-token',
+                ],
+                'timeout' => 120,
+            ]
+        );
+        $result   = wp_remote_retrieve_body( $response );
+        //$result = '{"razorpay_connect_status":"connected","public_token":"rzp_test_oauth_NYcLFJWlw4peGp","razorpay_account_id":"acc_Edx47Bz3kvM7m5","token_type":"Bearer","expires_in":7776000,"access_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJIOWxzUWRocVh2Y2t2VyIsImp0aSI6Ik5ZY0xGSmxCYURpajFsIiwiaWF0IjoxNzA3NDQ1OTgyLCJuYmYiOjE3MDc0NDU5ODIsInN1YiI6IiIsImV4cCI6MTcxNTIyMTk4MiwidXNlcl9pZCI6IkVkeDQ3NW9OalVJeFp5IiwibWVyY2hhbnRfaWQiOiJFZHg0N0J6M2t2TTdtNSIsInNjb3BlcyI6WyJyZWFkX3dyaXRlIl19.bHxf-FdLsT070D_zMBAKRDUnL9bmJkNHLAlIXyR8QZsjiEOByy1qXhvB-564sl7uGTZMMvmwjhGyDbS1Bi2jXQ","refresh_token":"def502003ccd3839de4a49fcea3ff253cbc46272ff2d8f6158c57af735c7ec94cf4825f57876b0cdaa5ffba7c3ebb0686ff983d5cd73098a57e6453b385e9e0de82d366e9287b221f078b7acff299eb14027de183d245e19f9360283cd6d3d5fbd4823d062b33361be9f63ede6097dfc610976c07f08f47b7f9cf411bacab4ae0e151bbfdf7929bb694760699a9a9a435d2b347f11f7222dd834cf342d0225b3a652a65fdb03d45d8d197a2dbb65002a7c3de1810e70c9c36ba835dcb7122569caa0e29c68c2b5039232cc88722d6c1c99e100e91e61e117e3f30e78b545113f419e56ca0381c83dc515f99d2cce9ca04e3f35099b151d"}';
+        $result   = json_decode( $result );
+
+        if ( JSON_ERROR_NONE !== json_last_error() ) {
+            $this->inc_refresh_token_fail_counter( $mode );
+            self::schedule_next_refresh_access_token( $mode, $expires_at );
+            return;
+        }
+
+        if ( isset( $result->razorpay_connect_status ) && 'failed' === $result->razorpay_connect_status ) {
+            $this->inc_refresh_token_fail_counter( $mode );
+
+            // Client config if access is revoked.
+            if ( isset( $result->error ) && isset( $result->error->description )
+            && ( str_contains($result->error->description, 'revoked') || str_contains($result->error->description, 'expired') ) ) {
+                self::clear_config( $mode );
+                return;
+            }
+        }
+
+        self::save_token( $result, $mode );
+    }
+
+    private static function save_token(  $token_data, $mode, $new_connection = false ) {
+        if ( ! ( isset( $token_data->razorpay_connect_status ) && 'connected' === $token_data->razorpay_connect_status ) || empty( $token_data->expires_in ) ) {
+            return;
+        }
+
+        $expires_at = time() + $token_data->expires_in - 45;
+        $options    = get_option( 'woocommerce_wc-razorpay_settings', []);
+
+        $setting_prefix = "test" === $mode ? "test_" : "";
+
+        $options[ $setting_prefix . 'key_id' ] = $token_data->public_token;
+        $options[ $setting_prefix . 'access_token' ]      = $token_data->access_token;
+        $options[ $setting_prefix . 'refresh_token' ]      = $token_data->refresh_token;
+        $options[ $setting_prefix . 'expires_at' ]      = $expires_at;
+        $options[ $setting_prefix . 'is_connected' ]      = true;
+
+        // Reset Connection Fail Counter.
+        $options[ $setting_prefix . 'connection_fail_count' ]      = 0;
+
+        if ( $new_connection ) {
+            $options[ $setting_prefix . 'connected_at' ]      = time();
+        }
+
+        if ( isset( $token_data->merchant_id ) ) {
+            $options[ $setting_prefix . 'merchant_id' ]      = $token_data->merchant_id;
+        }
+
+        update_option( 'woocommerce_wc-razorpay_settings', $options );
+
+        self::schedule_next_refresh_access_token( $mode, $expires_at );
+    }
+
+    private static function schedule_next_refresh_access_token( $mode, $expires_at ) {
+        if ( empty( $expires_at ) ) {
+            return;
+        }
+
+        // Don't set next refresh cron if already refreshing.
+        if ( get_transient( 'rzp_woocommerce_refreshing_access_token_' . $mode ) ) {
+            return;
+        }
+
+        $next_schedule_time = as_next_scheduled_action( 'rzp_woocommerce_refresh_access_token', [ 'mode' => $mode ], 'rzp-woocommerce' );
+        if ( $next_schedule_time && $next_schedule_time < $expires_at ) {
+           return;
+        }
+
+        $next_schedule_time = $expires_at - self::RENEWAL_TIME_BEFORE_TOKEN_EXPIRE + wp_rand( 0, MINUTE_IN_SECONDS );
+        $current_time       = time();
+        if ( $next_schedule_time <= $current_time ) {
+            $next_schedule_time = $current_time + wp_rand( 0, MINUTE_IN_SECONDS );
+        }
+
+        \as_schedule_single_action(
+            $next_schedule_time,
+            'rzp_woocommerce_refresh_access_token',
+            [ 'mode' => $mode ],
+            'rzp-woocommerce'
+            );
+    }
+
+    public function clear_config( $mode ) {
+        $options                                = get_option( 'woocommerce_wc-razorpay_settings', []);
+
+        $setting_prefix = "test" === $mode ? "test_" : "";
+
+        unset($options[ $setting_prefix . 'key_id' ]);
+        unset($options[ $setting_prefix . 'key_secret' ]);
+        unset($options[ $setting_prefix . 'is_connected' ] );
+        unset($options[ $setting_prefix . 'expires_at' ]   );
+        unset($options[ $setting_prefix . 'access_token' ] );
+        unset($options[ $setting_prefix . 'refresh_token' ] );
+        unset($options[ $setting_prefix . 'merchant_id' ]  );
+        unset($options[ $setting_prefix . 'connection_fail_count' ]  );
+
+        update_option( 'woocommerce_wc-razorpay_settings', $options );
+    }
+
+    /*
+     * Increse the refresh token fail counter.
+     */
+    private function inc_refresh_token_fail_counter( $mode ) {
+        $setting_prefix = "test" === $mode ? "test_" : "";
+
+        $connection_fail_count = $this->get_option( $setting_prefix . 'connection_fail_count' ) ;
+
+        ++$connection_fail_count;
+
+        // Kill connection after 30 fail attempts
+        if ( 30 < $connection_fail_count ) {
+            self::clear_config( $mode );
+            return;
+        }
+
+        // Count how many times refresh token attempt is failed.
+        $this->update_option( $setting_prefix . 'connection_fail_count', $connection_fail_count ) ;
+    }
+
+    public function generate_razorpay_connect_button_html($k, $v){
+        $test_access_token = $this->get_option( 'test_access_token' ) ;
+        if (empty($test_access_token)){
+            $test_button_color = "#d63638";
+            $test_button_action = "connect";
+            $test_connection_status = "Disconnected";
+        } else {
+            $test_button_color = "#00a32a";
+            $test_button_action = "disconnect";
+            $test_connection_status = "Connected";
+        }
+
+        $live_access_token = $this->get_option( 'access_token' ) ;
+        if (empty($live_access_token)){
+            $live_button_color = "#d63638";
+            $live_button_action = "connect";
+            $live_connection_status = "Disconnected";
+        } else {
+            $live_button_color = "#00a32a";
+            $live_button_action = "disconnect";
+            $live_connection_status = "Connected";
+        }
+
+        ob_start();
+        ?>
+        <a id="razorpay-platform-connect-test" class="button button-primary button-large" rzp-woocommerce-connect-mode="test" rzp-woocommerce-connect-action="<?php echo $test_button_action?>"
+            role="button" style="font-size: 21px;margin: 10px;background: <?php echo $test_button_color;?>"><?php echo $test_connection_status;?> in Test Mode</a>
+        <a id="razorpay-platform-connect-live" class="button button-primary button-large" rzp-woocommerce-connect-mode="live" rzp-woocommerce-connect-action="<?php echo $live_button_action?>"
+            role="button" style="font-size: 21px;margin: 10px;background: <?php echo $live_button_color;?>"><?php echo $live_connection_status;?> in Live Mode</a>
+        <?php
+
+		return ob_get_clean();
     }
 }

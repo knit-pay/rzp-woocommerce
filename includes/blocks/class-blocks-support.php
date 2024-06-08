@@ -40,18 +40,18 @@ final class RZP_WC_Payment_Gateway_Blocks_Support extends AbstractPaymentMethodT
 		$script_path       = 'includes/blocks/assets/blocks.js';
 		$script_asset_path = RZPWC_PATH . 'includes/blocks/assets/blocks.asset.php';
 		$script_asset      = file_exists( $script_asset_path )
-			? require( $script_asset_path )
-			: array(
-				'dependencies' => array(),
-				'version'      => RZPWC_VERSION
-			);
+			? require $script_asset_path
+			: [
+				'dependencies' => [],
+				'version'      => RZPWC_VERSION,
+			];
 		$script_url        = RZPWC_URL . $script_path;
 
 		wp_register_script(
 			'rzpwc-payment-blocks',
 			$script_url,
-			$script_asset[ 'dependencies' ],
-			$script_asset[ 'version' ],
+			$script_asset['dependencies'],
+			$script_asset['version'],
 			true
 		);
 

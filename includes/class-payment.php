@@ -74,7 +74,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// Method with all the options fields
 		$this->init_form_fields();
-		
+
 		// Load the settings.
 		$this->init_settings();
 
@@ -126,37 +126,37 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// Connection Redirect Listener.
 		self::update_connection_status();
-		
+
 		// Schedule next refresh token if not done before.
 		self::schedule_next_refresh_access_token( 'test', $this->get_option( 'test_expires_at' ) );
 		self::schedule_next_refresh_access_token( 'live', $this->get_option( 'expires_at' ) );
 
 		// verify payment from redirection
 		add_action( 'woocommerce_api_rzp-payment', [ $this, 'capture_payment' ] );
-
+		
 		// verify payment from webhook
 		add_action( 'woocommerce_api_rzp-webhook', [ $this, 'process_webhook' ] );
-
+		
 		// cancel invoice if order paid via other payment gateways
 		add_action( 'woocommerce_order_status_processing', [ $this, 'cancel_payment_link' ], 10, 1 );
 		
 		// cancel invoice if order cancelled
 		add_action( 'woocommerce_order_status_cancelled', [ $this, 'cancel_payment_link' ], 10, 1 );
-
+		
 		// add custom text on thankyou page
 		add_filter( 'woocommerce_thankyou_order_received_text', [ $this, 'order_received_text' ], 10, 2 );
-
+		
 		// change wc payment link if exists razorpay link
 		add_filter( 'woocommerce_get_checkout_payment_url', [ $this, 'custom_checkout_url' ], 10, 2 );
-
+		
 		// Get new access token if it's about to get expired.
 		add_action( 'rzp_woocommerce_refresh_access_token', [ $this, 'refresh_access_token' ], 10, 1 );
-
+		
 		if ( ! $this->is_valid_for_use() ) {
 			$this->enabled = 'no';
 		}
 	}
-		
+	
 	/**
 	 * Logging method.
 	 *
@@ -181,7 +181,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 */
 	public function process_admin_options() {
 		$saved = parent::process_admin_options();
-
+		
 		// Take action if Connect/Disconnect button is clicked..
 		$rzp_woocommerce_connect_action = array_key_exists( 'rzp-woocommerce-connect-action', $_POST ) ? \sanitize_text_field( $_POST['rzp-woocommerce-connect-action'] ) : '';
 		$rzp_woocommerce_connect_mode   = array_key_exists( 'rzp-woocommerce-connect-mode', $_POST ) ? \sanitize_text_field( $_POST['rzp-woocommerce-connect-mode'] ) : '';
@@ -190,7 +190,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		} elseif ( 'disconnect' === $rzp_woocommerce_connect_action ) {
 			return $this->clear_config( $rzp_woocommerce_connect_mode );
 		}
-
+		
 		// auto enable webhook
 		$this->auto_enable_webhook();
 		
@@ -201,10 +201,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			}
 			self::$log->clear( 'razorpay' );
 		}
-
+		
 		return $saved;
 	}
-
+	
 	/**
 	 * Check if this gateway is enabled and available in the user's country.
 	 *
@@ -237,7 +237,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 					<strong><?php esc_html_e( 'Gateway disabled', 'rzp-woocommerce' ); ?></strong>: 
 							<?php 
 							/* translators: %s: Link to Razorpay currency page */
-							printf( esc_html__( 'Razorpay does not support your store currency. Please check the supported currency list from <a href="%s" target="_blank">here</a>.', 'rzp-woocommerce' ), 'https://razorpay.com/docs/international-payments/#supported-currencies' );
+							printf( __( 'Razorpay does not support your store currency. Please check the supported currency list from <a href="%s" target="_blank">here</a>.', 'rzp-woocommerce' ), 'https://razorpay.com/docs/international-payments/#supported-currencies' );
 							?>
 				</p>
 			</div>
@@ -480,7 +480,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// make api request
 		$response = $this->api_data( $this->api_mode . 's/', wp_json_encode( $args ) );
-		
+
 		// check is not error
 		if ( is_wp_error( $response ) ) {
 			// log
@@ -488,7 +488,12 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				
 			// add error notice
 			wc_add_notice( __( 'Error Occured! Please change API Type form plugin settings or contact with Site Administrator to resolve this issue.', 'rzp-woocommerce' ), 'error' );
-			return;
+
+			return [
+				'result'       => 'failure',
+				'redirect'     => wc_get_checkout_url(),
+				'errorMessage' => __( 'Error Occured! Please change API Type form plugin settings or contact with Site Administrator to resolve this issue.', 'rzp-woocommerce' ),
+			];
 
 		} else {
 			// get data
@@ -527,8 +532,13 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				$order->add_order_note( esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ), false );
 	
 				// add error notice
-				wc_add_notice( __( 'Connection Error Occured! Please try again.', 'rzp-woocommerce' ), 'error' );
-				return;
+				wc_add_notice( esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ), 'error' );
+
+				return [
+					'result'       => 'failure',
+					'redirect'     => wc_get_checkout_url(),
+					'errorMessage' => esc_attr( $body['error']['code'] ) . ' : ' . esc_attr( $body['error']['description'] ),
+				];
 			}                
 		}
 	}

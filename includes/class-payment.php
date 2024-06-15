@@ -450,6 +450,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 					'knitpay_extension' => 'rzp-wc',
 					'rzp_wc_version'    => RZPWC_VERSION,
 					'php_version'       => PHP_VERSION,
+					'website_url'       => home_url( '/' ),
 				] 
 			),
 			'callback_url'    => trailingslashit( get_home_url( null, 'wc-api/rzp-payment' ) ),
@@ -1067,7 +1068,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			$args = [
 				'name'    => html_entity_decode( $order->get_formatted_billing_full_name(), ENT_QUOTES, 'UTF-8' ),
 				'email'   => $order->get_billing_email(),
-				'contact' => ( $this->api_type === 'standard' ) ? '+91' . substr( $order->get_billing_phone(), -10 ) : substr( $order->get_billing_phone(), -10 ),
+				'contact' => $order->get_billing_phone(),
 			];
 		} else {
 			$args = [

@@ -1068,13 +1068,13 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			$args = [
 				'name'    => html_entity_decode( $order->get_formatted_billing_full_name(), ENT_QUOTES, 'UTF-8' ),
 				'email'   => $order->get_billing_email(),
-				'contact' => $order->get_billing_phone(),
+				'contact' => preg_replace( '/[^+\d]/', '', $order->get_billing_phone() ),
 			];
 		} else {
 			$args = [
 				'name'    => $order->billing_first_name . ' ' . $order->billing_last_name,
 				'email'   => $order->billing_email,
-				'contact' => $order->billing_phone,
+				'contact' => preg_replace( '/[^+\d]/', '', $order->billing_phone ),
 			];
 		}
 

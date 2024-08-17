@@ -1338,6 +1338,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		unset( $options[ $setting_prefix . 'refresh_token' ] );
 		unset( $options[ $setting_prefix . 'merchant_id' ] );
 		unset( $options[ $setting_prefix . 'connection_fail_count' ] );
+		unset( $options[ $setting_prefix . 'connected_at' ] );
 
 		update_option( 'woocommerce_wc-razorpay_settings', $options );
 	}

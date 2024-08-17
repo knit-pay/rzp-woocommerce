@@ -554,9 +554,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$has_api_creds = false;
 
 		if ( $this->test_mode ) {
-			$has_api_creds = $this->get_option( 'test_key_id' ) && $this->get_option( 'test_key_secret' );
+			$has_api_creds = $this->get_option( 'test_key_id' );
 		} else {
-			$has_api_creds = $this->get_option( 'key_id' ) && $this->get_option( 'key_secret' );
+			$has_api_creds = $this->get_option( 'key_id' );
 		}
 
 		return $order && $order->get_transaction_id() && $has_api_creds;

@@ -106,6 +106,18 @@ Post detailed information about the issue in the [support forum](https://wordpre
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
 
+= 2.1.0 =
+Release Date: Aug 25, 2024
+
+* Tested upto WordPress 6.6.
+* Start Showing notice about deprecated settings.
+
+= 2.0.1 =
+Release Date: June 15, 2024
+
+* Fixed Fatal errors on PHP 8.
+* Made phone number optional.
+
 = 2.0.0 =
 Release Date: June 08, 2024
 

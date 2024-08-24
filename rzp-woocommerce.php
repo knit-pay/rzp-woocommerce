@@ -3,7 +3,7 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 2.0.1
+ * Version: 2.1.0
  * Author: Team KnitPay
  * Author URI: https://www.knitpay.org/
  * License: GPLv3
@@ -391,6 +391,35 @@ final class RZPWC {
 				<a href="<?php echo esc_url( $no_thanks ); ?>" class="later"><strong><?php esc_html_e( 'Nope&#44; maybe later', 'rzp-woocommerce' ); ?></strong></a></p>
 			</div>
 			<?php
+		}
+
+		// Show Deprecate Settings Notice to 1/50 clients for 1 week.
+		$rzpwc_settings = get_option( 'woocommerce_wc-razorpay_settings', [] );
+		if ( empty( $rzpwc_settings['key_secret'] ) ) {
+			$deprecate_setting_notice_random_priority = get_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority' );
+			if ( empty( $deprecate_setting_notice_random_priority ) ) {
+				$from_date          = new DateTime( '2024-09-01' );
+				$current_date       = new DateTime();
+				$from_date_interval = $current_date->diff( $from_date );
+				$weeks_passed       = floor( $from_date_interval->days / 7 );
+				$weeks_passed       = ( $weeks_passed > 49 ) ? 49 : $weeks_passed;
+
+				$deprecate_setting_notice_random_priority = strval( wp_rand( 1, 50 - $weeks_passed ) );
+				set_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority', $deprecate_setting_notice_random_priority, WEEK_IN_SECONDS );
+			}
+			if ( '1' === $deprecate_setting_notice_random_priority ) {
+				$deprecate_setting_message = sprintf(
+					'%1$s You are using deprecated configurations for Razorpay Gateway. Kindly configure it again on the %2$s page. The deprecated setting will stop working in the future.',
+					'<strong>Razorpay Payment Links for WooCommerce</strong> —',
+					'<a target="_blank" href="' . admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) . '">WooCommerce Payment Setting</a>'
+				);
+				?>
+
+			<div class="notice notice-info">
+				<p><?php echo wp_kses_post( $deprecate_setting_message ); ?></p>
+			</div>
+				<?php
+			}
 		}
 	}
 

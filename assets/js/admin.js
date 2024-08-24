@@ -43,5 +43,6 @@ function trigger_connection_action(this_object, rzp_woocommerce_connect_action_m
 	this_object.parentNode.insertBefore(inputMode, this.nextSibling);
 	this_object.parentNode.insertBefore(inputAction, this.nextSibling);
 
+	// TODO confirm Google signin before continue.
 	jQuery(".woocommerce-save-button").click();
 }

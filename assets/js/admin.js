@@ -2,6 +2,9 @@ jQuery(document).ready(function() {
 	jQuery('#razorpay-platform-connect-test, #razorpay-platform-connect-live').on('click', function(event) {
 		event.preventDefault();
 
+		// Enable Save Button.
+		jQuery(".woocommerce-save-button").prop("disabled", false);
+
 		jQuery("#razorpay-platform-connect-test").attr("disabled", "");
 		jQuery("#razorpay-platform-connect-live").attr("disabled", "");
 
@@ -43,6 +46,5 @@ function trigger_connection_action(this_object, rzp_woocommerce_connect_action_m
 	this_object.parentNode.insertBefore(inputMode, this.nextSibling);
 	this_object.parentNode.insertBefore(inputAction, this.nextSibling);
 
-	// TODO confirm Google signin before continue.
 	jQuery(".woocommerce-save-button").click();
 }

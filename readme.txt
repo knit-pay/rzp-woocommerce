@@ -2,8 +2,8 @@
 Contributors: knitpay, gautammkgarg, infosatech
 Tags: razorpay, qrcode, upi, woocommerce, payments,
 Requires at least: 4.6
-Tested up to: 6.6
-Stable tag: 2.1.0
+Tested up to: 6.7
+Stable tag: 2.1.1
 Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -36,6 +36,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Order note for every Transaction related process.
 * Detailed Payment process Log via WooCommerce Logger.
 * Lots of filters available to customize the output.
+* Supports OAuth Integration. Integrates without API keys in just 2 clicks.
 
 Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
 

@@ -327,7 +327,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'title'       => __( 'Razorpay Webhook:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable Razorpay Webhook', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
-				'description' => __( 'Use the above webhook URL in Razorpaay "Settings > Webhooks".', 'rzp-woocommerce' ),
+				'description' => __( 'Use the above webhook URL in Razorpay "Settings > Webhooks".', 'rzp-woocommerce' ),
 				'default'     => 'no',
 				'desc_tip'    => false,
 			],

@@ -310,6 +310,7 @@ final class RZPWC {
 	public function load_gateway() {
 		if ( class_exists( '\WC_Payment_Gateway' ) ) {
 			require_once RZPWC_PATH . 'includes/class-payment.php';
+			//require_once RZPWC_PATH.'includes/razorpay-affordability-widget.php';
 		}
 	}
 
@@ -395,7 +396,7 @@ final class RZPWC {
 
 		// Show Deprecate Settings Notice to 1/50 clients for 1 week.
 		$rzpwc_settings = get_option( 'woocommerce_wc-razorpay_settings', [] );
-		if ( empty( $rzpwc_settings['key_secret'] ) ) {
+		if ( empty( $rzpwc_settings['key_secret'] ) ) { // FIXME It's visible even if using new keys
 			$deprecate_setting_notice_random_priority = get_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority' );
 			if ( empty( $deprecate_setting_notice_random_priority ) ) {
 				$from_date          = new DateTime( '2024-09-01' );

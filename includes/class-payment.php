@@ -399,7 +399,71 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'desc_tip'    => false,
 			],
 		];
+		
+		return;
 
+		//Affordability Widget Code
+		if (is_admin())
+		{
+		    try
+		    {
+		        $setting_prefix          = 'yes' === $this->get_option( 'testmode' )? "test_": "";
+		        $key_id             = $this->get_option( $setting_prefix . 'key_id' );
+		        //$api = $this->getRazorpayApiInstance();
+		        
+		        $merchantPreferences =$this->api_data( 'accounts/me/features', null, 'GET' );ppp($merchantPreferences);ddd();
+		        //$merchantPreferences = $api->request->request('GET', 'accounts/me/features');
+		        if (isset($merchantPreferences) === false or
+		            isset($merchantPreferences['assigned_features']) === false)
+		        {
+		            throw new Exception("Error in Api call.");
+		        }
+		        
+		        update_option('rzp_afd_enable', 'no');
+		        update_option('rzp_rtb_enable', 'no');
+		        
+		        foreach ($merchantPreferences['assigned_features'] as $preference)
+		        {
+		            if ($preference['name'] === 'affordability_widget' or
+		                $preference['name'] === 'affordability_widget_set')
+		            {
+		                add_action('woocommerce_sections_checkout', 'addSubSection');
+		                add_action('woocommerce_settings_tabs_checkout', 'displayAffordabilityWidgetSettings');
+		                add_action('woocommerce_update_options_checkout', 'updateAffordabilityWidgetSettings');
+		                update_option('rzp_afd_enable', 'yes');
+		                break;
+		            }
+		        }
+		        
+		        $rtbActivationStatus = $api->request->request('GET', 'rtb?key_id=' . $key_id);
+		        
+		        if (isset($rtbActivationStatus['widget_enabled']) and
+		            $rtbActivationStatus['widget_enabled'] === true)
+		        {
+		            $this->form_fields['rtb_widget_title'] =  array(
+		                'title' => '<span style="font-size: 20px;">' . __('Razorpay Trusted Business'). '</span>',
+		                'type' => 'title'
+		            );
+		            
+		            $this->form_fields['enable_rtb_widget'] =  array(
+		                'title'                 => __('RTB Widget Enable/Disable'),
+		                'type'                  => 'checkbox',
+		                'desc'                  => __('Enable RTB Widget?'),
+		                'default'               => 'no',
+		                'id'                    => 'rzp_rtb_enable'
+		            );
+		            update_option('rzp_rtb_enable', 'yes');
+		        }
+		        
+		        update_option('rzp_afd_feature_checked', 'yes');
+		        update_option('rzp_rtb_feature_checked', 'yes');
+		    }
+		    catch (\Exception $e)
+		    {
+		        rzpLogError($e->getMessage());
+		        return;
+		    }
+		}
 	}
 		
 	/*
@@ -474,7 +538,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		} 
 
 		$args = apply_filters( 'rzpwc_payment_init_payload', $args, $order, $this->test_mode );
-
+// move notes here.
 		$this->log( 'Data sent for creating Payment Link: ' . wc_print_r( $args, true ) );
 
 		do_action( 'rzpwc_after_payment_init', $order_id, $order );
@@ -782,7 +846,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 * @param WC_Order $order Order data.
 	 * @return string
 	 */
-	public function order_received_text( $text, $order ) {
+	public function order_received_text( $text, $order ) {ddd();
 		if ( 'yes' === $this->enabled && $this->id === $order->get_payment_method() && ! empty( $this->thank_you ) ) {
 			return esc_html( $this->thank_you );
 		}

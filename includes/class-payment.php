@@ -783,7 +783,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function order_received_text( $text, $order ) {
-		if ( 'yes' === $this->enabled && $this->id === $order->get_payment_method() && ! empty( $this->thank_you ) ) {
+		if ( 'yes' === $this->enabled && isset( $order ) && $this->id === $order->get_payment_method() && ! empty( $this->thank_you ) ) {
 			return esc_html( $this->thank_you );
 		}
 

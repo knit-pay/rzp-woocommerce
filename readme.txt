@@ -3,7 +3,7 @@ Contributors: knitpay, gautammkgarg, infosatech
 Tags: razorpay, qrcode, upi, woocommerce, payments,
 Requires at least: 4.6
 Tested up to: 6.9
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -94,6 +94,10 @@ Yes, this plugin is compatible with any theme.
 
 Post detailed information about the issue in the [support forum](https://wordpress.org/support/plugin/rzp-woocommerce) and we will work to fix it.
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/48961c5c-6f65-4e71-b740-2913a1170d08). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Screenshots ==
 
 1. Admin Dashboard
@@ -106,6 +110,11 @@ Post detailed information about the issue in the [support forum](https://wordpre
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 2.1.4 =
+Release Date: Jun 06, 2026
+
+* Tested upto WP 7.0
 
 = 2.1.3 =
 Release Date: Jan 12, 2026

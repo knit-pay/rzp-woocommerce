@@ -1,6 +1,49 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 2.1.5
+Release Date: Jun 19, 2026
+
+* Security: Hardened payment verification and order processing.
+
+## 2.1.4
+Release Date: Jun 06, 2026
+
+* Tested upto WP 7.0
+
+## 2.1.3
+Release Date: Jan 12, 2026
+
+* Fixed Fatal Error in case of missing order.
+* Tested upto WP 6.9
+
+## 2.1.2
+Release Date: Oct 30, 2024
+
+* Fix Save button issue while connect and disconnect.
+
+## 2.1.0
+Release Date: Aug 25, 2024
+
+* Tested upto WordPress 6.6.
+* Start Showing notice about deprecated settings.
+
+## 2.0.1
+Release Date: June 15, 2024
+
+* Fixed Fatal errors on PHP 8.
+* Made phone number optional.
+
+## 2.0.0
+Release Date: June 08, 2024
+
+* Added Support for Connect with Razorpay (2 Clicks - Fast Integration).
+
+## 1.2.2
+Release Date: March 13, 2024
+
+* Plugin ownership transferred from Sayan Datta to Knit Pay (Logic Bridge Techno Mart LLP).
+
 ## 1.2.1
 Release Date: January 8, 2024
 

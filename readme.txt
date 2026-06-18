@@ -8,7 +8,7 @@ Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
-The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
+The easiest and most secure way to collect payments with WooCommerce via Razorpay (Cards, NetBanking, UPI, Wallets, QR Code).
 
 == Description ==
 

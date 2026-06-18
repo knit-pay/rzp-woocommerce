@@ -399,7 +399,6 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'desc_tip'    => false,
 			],
 		];
-
 	}
 		
 	/*
@@ -700,9 +699,39 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 				// update the order status
 				$order->update_status( 'failed' );
+
+				wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
+				exit;
 			}
 
 			if ( 'authorized' === $body['status'] || 'captured' === $body['status'] ) {
+				// Prevent payment-ID reuse.
+				$existing_order_id = wc_get_orders(
+					[
+						'limit'          => 1,
+						'transaction_id' => $payment_id,
+						'exclude'        => [ $order_id ],
+						'paginate'       => false,
+						'return'         => 'ids',
+					]
+				);
+				if ( ! empty( $existing_order_id ) ) {
+					$this->log( 'Payment ID reused: ' . $payment_id . ' already applied to order ' . implode( ',', $existing_order_id ) );
+
+					$order->update_status( 'failed' );
+
+					wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
+					exit;
+				}
+
+				// Note: We intentionally do NOT verify the payment amount against the
+				// order total here. Razorpay offers/discounts configured at the
+				// dashboard (or via options.order.offers) can legitimately reduce the
+				// customer-paid amount below the WooCommerce order total, which would
+				// cause valid discounted payments to be rejected as failed. The order
+				// binding is enforced by the wc_order_id notes check above and the
+				// payment-ID reuse guard.
+
 				// update the payment reference
 				$order->payment_complete( $payment_id );
 

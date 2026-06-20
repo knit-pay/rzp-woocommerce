@@ -14,7 +14,7 @@ The easiest and most secure way to collect payments with WooCommerce via Razorpa
 
 ### Razorpay Payment Links for WooCommerce
 
-This is the Razorpay Payment Gateway plugin for WooCommerce based on [Razorpay Payment Links](https://razorpay.com/payment-links/). Allows you to accept Credit Cards, Debit Cards, Netbanking, Wallets, and UPI Payments with the WooCommerce plugin.
+This is the Razorpay Payment Gateway plugin for WooCommerce based on [Razorpay Payment Links](https://razorpay.com/payment-links/). Allows you to accept UPI, Credit Cards, Debit Cards, Netbanking, Wallets, and Apple Payment Payments with the WooCommerce plugin.
 
 It uses a Razorpay's Payment Link API integration, allowing the customer to pay on your website being redirected to Razorpay's Secure Payment Page. This allows for refunds, works across all browsers, and is compatible with the latest WooCommerce.
 

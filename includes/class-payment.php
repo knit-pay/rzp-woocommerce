@@ -702,9 +702,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 				wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
 				exit;
-			}
-
-			if ( 'authorized' === $body['status'] || 'captured' === $body['status'] ) {
+			} elseif ( 'authorized' === $body['status'] || 'captured' === $body['status'] ) {
 				// Prevent payment-ID reuse.
 				$existing_order_id = wc_get_orders(
 					[
@@ -1354,7 +1352,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		);
 	}
 
-	public function clear_config( $mode ) {
+	public static function clear_config( $mode ) {
 		$options = get_option( 'woocommerce_wc-razorpay_settings', [] );
 
 		$setting_prefix = 'test' === $mode ? 'test_' : '';

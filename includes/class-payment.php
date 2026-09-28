@@ -53,8 +53,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	protected $ref;
 	protected $status;
 
-	const KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL = 'https://razorpay-connect.knitpay.org/';
-	const RENEWAL_TIME_BEFORE_TOKEN_EXPIRE       = 15 * MINUTE_IN_SECONDS; // 15 minutes.
+	const KNIT_PAY_OAUTH_SERVER_URL             = 'https://oauth-server.knitpay.org/api/';
+	const GATEWAY_ID                            = 'rzp-woocommerce';
+	const RENEWAL_TIME_BEFORE_TOKEN_EXPIRE      = 15 * MINUTE_IN_SECONDS; // 15 minutes.
 
 	/**
 	 * Class constructor
@@ -1139,74 +1140,100 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$this->clear_config( $mode );
 
 		$response = wp_remote_post(
-			self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+			self::KNIT_PAY_OAUTH_SERVER_URL . 'razorpay/oauth/authorize',
 			[
-				'body'    => [
-					'admin_url'  => rawurlencode( admin_url() ),
-					'action'     => 'connect',
-					'gateway_id' => 'rzp-woocommerce',
-					'mode'       => $mode,
-				],
+				'headers' => [ 'Content-Type' => 'application/json' ],
+				'body'    => wp_json_encode(
+					[
+						'admin_url'  => admin_url(),
+						'gateway_id' => self::GATEWAY_ID,
+						'mode'       => $mode,
+					]
+				),
 				'timeout' => 60,
 			]
 		);
 		$result   = wp_remote_retrieve_body( $response );
 		$result   = json_decode( $result );
-		if ( isset( $result->error ) ) {
-			echo $result->error;
+
+		if ( ! ( isset( $result->success ) && $result->success ) ) {
+			// Server rejected the request or returned an error. Stop execution.
+			echo isset( $result->data->message ) ? $result->data->message : 'Not receiving a valid response from the Knit Pay OAuth Server. Please try again after some time or report the issue to the support team.';
 			exit;
 		}
-		if ( isset( $result->return_url ) ) {
-			$return_url_components = wp_parse_url( $result->return_url );
 
-			wp_parse_str( $return_url_components['query'], $return_url_params );
-
-			// Saving current Mode, This mode will be used in update_connection_status function
-			set_transient( 'rzp_woocommerce_connect_mode_' . $return_url_params['state'], $mode, HOUR_IN_SECONDS );
-
-			add_filter(
-				'allowed_redirect_hosts',
-				function ( $hosts ) {
-					$hosts[] = 'auth.razorpay.com';
-					return $hosts;
-				}
-			);
-			wp_safe_redirect( add_query_arg( 'redirect_uri', self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL, $result->return_url ) );
+		$oauth_state = isset( $result->data->state ) ? sanitize_text_field( $result->data->state ) : '';
+		if ( empty( $oauth_state ) || empty( $result->data->auth_url ) ) {
+			// Fail closed: without a state or auth URL the connection cannot proceed.
+			echo 'The Knit Pay OAuth server did not return the required parameters. Please try again after some time or report the issue to the support team.';
 			exit;
 		}
+
+		// Bind the state to this site (CSRF protection): only a state
+		// issued by a connect flow of THIS site may complete a connection.
+		set_transient( 'rzp_woocommerce_oauth_state_' . $oauth_state, $mode, HOUR_IN_SECONDS );
+
+		add_filter(
+			'allowed_redirect_hosts',
+			function ( $hosts ) {
+				$hosts[] = 'auth.razorpay.com';
+				return $hosts;
+			}
+		);
+		wp_safe_redirect( $result->data->auth_url );
+		exit;
 	}
 
 	public static function update_connection_status() {
-		if ( ! ( filter_has_var( INPUT_GET, 'razorpay_connect_status' ) && current_user_can( 'manage_options' ) ) ) {
+		if ( ! ( isset( $_GET['knitpay_oauth_auth_status'] ) && current_user_can( 'manage_options' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- External OAuth callback; CSRF validated below by binding the `state` parameter to a transient created during the connection initiated by THIS site.
 			return;
 		}
 
-		$code                    = isset( $_GET['code'] ) ? sanitize_text_field( $_GET['code'] ) : null;
-		$state                   = isset( $_GET['state'] ) ? sanitize_text_field( $_GET['state'] ) : null;
-		$gateway_id              = isset( $_GET['gateway_id'] ) ? sanitize_text_field( $_GET['gateway_id'] ) : null;
-		$razorpay_connect_status = isset( $_GET['razorpay_connect_status'] ) ? sanitize_text_field( $_GET['razorpay_connect_status'] ) : null;
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- External OAuth callback; CSRF is validated below by binding the `state` parameter to a transient created during the connection initiated by THIS site.
+		$code                      = isset( $_GET['code'] ) ? sanitize_text_field( $_GET['code'] ) : null;
+		$state                     = isset( $_GET['state'] ) ? sanitize_text_field( $_GET['state'] ) : null;
+		$gateway_id                = isset( $_GET['gateway_id'] ) ? sanitize_text_field( $_GET['gateway_id'] ) : null;
+		$knitpay_oauth_auth_status = isset( $_GET['knitpay_oauth_auth_status'] ) ? sanitize_text_field( $_GET['knitpay_oauth_auth_status'] ) : null;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
+		// Don't interfere with callbacks of other plugins (e.g. Knit Pay) sharing the same OAuth server.
+		if ( self::GATEWAY_ID !== $gateway_id ) {
+			return;
+		}
+
+		// CSRF protection: only honour states issued by a connect flow of this
+		// site, and only once. A state minted on any other site fails here.
 		if ( empty( $state ) ) {
 			self::redirect_to_config();
-		} elseif ( empty( $code ) || 'failed' === $razorpay_connect_status ) {
-			$mode = get_transient( 'rzp_woocommerce_connect_mode_' . $state );
+		}
+
+		$state_transient_key = 'rzp_woocommerce_oauth_state_' . $state;
+		$mode                = get_transient( $state_transient_key );
+		if ( false === $mode ) {
+			self::redirect_to_config();
+		}
+
+		// Single-use state.
+		delete_transient( $state_transient_key );
+
+		if ( empty( $code ) || 'failed' === $knitpay_oauth_auth_status ) {
 			self::clear_config( $mode );
 			self::redirect_to_config();
 		}
 
-		// Fetch mode which was set in Connect function.
-		$mode = get_transient( 'rzp_woocommerce_connect_mode_' . $state );
-
 		// GET keys.
 		$response = wp_remote_post(
-			self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+			self::KNIT_PAY_OAUTH_SERVER_URL . 'razorpay/oauth/token',
 			[
-				'body'    => [
-					'code'       => $code,
-					'state'      => $state,
-					'gateway_id' => $gateway_id,
-					'action'     => 'get-keys',
-				],
+				'headers' => [ 'Content-Type' => 'application/json' ],
+				'body'    => wp_json_encode(
+					[
+						'code'       => $code,
+						'state'      => $state,
+						'gateway_id' => self::GATEWAY_ID,
+						'mode'       => $mode,
+					]
+				),
 				'timeout' => 90,
 			]
 		);
@@ -1241,7 +1268,6 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$setting_prefix = 'test' === $mode ? 'test_' : '';
 		$key_secret     = $this->get_option( $setting_prefix . 'key_secret' );
 		$refresh_token  = $this->get_option( $setting_prefix . 'refresh_token' );
-		$merchant_id    = $this->get_option( $setting_prefix . 'merchant_id' );
 		$expires_at     = $this->get_option( $setting_prefix . 'expires_at' );
 
 		// Don't proceed further if it's API key connection.
@@ -1257,14 +1283,16 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// GET keys.
 		$response = wp_remote_post(
-			self::KNIT_PAY_RAZORPAY_PLATFORM_CONNECT_URL,
+			self::KNIT_PAY_OAUTH_SERVER_URL . 'razorpay/oauth/token',
 			[
-				'body'    => [
-					'refresh_token' => $refresh_token,
-					'merchant_id'   => $merchant_id,
-					'mode'          => $mode,
-					'action'        => 'refresh-access-token',
-				],
+				'headers' => [ 'Content-Type' => 'application/json' ],
+				'body'    => wp_json_encode(
+					[
+						'refresh_token' => $refresh_token,
+						'gateway_id'    => self::GATEWAY_ID,
+						'mode'          => $mode,
+					]
+				),
 				'timeout' => 90,
 			]
 		);
@@ -1277,31 +1305,35 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			return;
 		}
 
-		if ( isset( $result->razorpay_connect_status ) && 'failed' === $result->razorpay_connect_status ) {
+		if ( isset( $result->success ) && ! $result->success ) {
 			$this->inc_refresh_token_fail_counter( $mode );
 
-			// Client config if access is revoked.
-			if ( isset( $result->error ) && isset( $result->error->description )
-			&& ( str_contains( $result->error->description, 'revoked' ) || str_contains( $result->error->description, 'expired' ) ) ) {
+			// Clear client config if access is revoked or token expired.
+			$error_message = isset( $result->data ) ? (string) $result->data : '';
+			if ( false !== strpos( $error_message, 'revoked' ) || false !== strpos( $error_message, 'expired' ) ) {
 				self::clear_config( $mode );
 				return;
 			}
+
+			self::schedule_next_refresh_access_token( $mode, $expires_at );
+			return;
 		}
 
 		self::save_token( $result, $mode );
 	}
 
 	private static function save_token( $token_data, $mode, $new_connection = false ) {
-		if ( ! ( isset( $token_data->razorpay_connect_status ) && 'connected' === $token_data->razorpay_connect_status ) || empty( $token_data->expires_in ) ) {
+		if ( ! ( isset( $token_data->success ) && $token_data->success ) || ! isset( $token_data->data ) || empty( $token_data->data->expires_in ) ) {
 			return;
 		}
 
+		$token_data = $token_data->data;
 		$expires_at = time() + $token_data->expires_in - 45;
 		$options    = get_option( 'woocommerce_wc-razorpay_settings', [] );
 
 		$setting_prefix = 'test' === $mode ? 'test_' : '';
 
-		$options[ $setting_prefix . 'key_id' ]        = $token_data->public_token;
+		$options[ $setting_prefix . 'key_id' ]        = $token_data->key_id;
 		$options[ $setting_prefix . 'access_token' ]  = $token_data->access_token;
 		$options[ $setting_prefix . 'refresh_token' ] = $token_data->refresh_token;
 		$options[ $setting_prefix . 'expires_at' ]    = $expires_at;

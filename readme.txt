@@ -120,6 +120,9 @@ If you like Razorpay Payment Links for WooCommerce, please take a moment to [giv
 Release Date: Oct 20, 2026
 
 * NEW: Added Razorpay Affordability Widget feature on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. The widget verifies feature availability on your Razorpay account and works with both OAuth and API key connections.
+* Improved: Deprecated-configuration notice now reaches all remaining legacy-key merchants within 25 weeks.
+* Security: Fixed fatal error in Webhook when a refund event arrives for a payment not created by the plugin.
+* Improved: Webhook now always responds with a clean 200 acknowledgement.
 
 = 2.2.0 =
 Release Date: Sep 28, 2026

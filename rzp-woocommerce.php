@@ -395,18 +395,20 @@ final class RZPWC {
 			<?php
 		}
 
-		// Show Deprecate Settings Notice to 1/50 clients for 1 week.
+		// Show Deprecate Settings Notice with rising frequency, completing the migration in 25 weeks.
 		$rzpwc_settings = get_option( 'woocommerce_wc-razorpay_settings', [] );
-		if ( empty( $rzpwc_settings['key_secret'] ) ) {
+		$legacy_live_connection   = ! empty( $rzpwc_settings['key_secret'] ) && empty( $rzpwc_settings['access_token'] );
+		$legacy_test_connection   = ! empty( $rzpwc_settings['test_key_secret'] ) && empty( $rzpwc_settings['test_access_token'] );
+		if ( $legacy_live_connection || $legacy_test_connection ) {
 			$deprecate_setting_notice_random_priority = get_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority' );
 			if ( empty( $deprecate_setting_notice_random_priority ) ) {
-				$from_date          = new DateTime( '2024-09-01' );
+				$from_date          = new DateTime( '2026-10-20' );
 				$current_date       = new DateTime();
 				$from_date_interval = $current_date->diff( $from_date );
 				$weeks_passed       = floor( $from_date_interval->days / 7 );
-				$weeks_passed       = ( $weeks_passed > 49 ) ? 49 : $weeks_passed;
+				$weeks_passed       = ( $weeks_passed > 24 ) ? 24 : $weeks_passed;
 
-				$deprecate_setting_notice_random_priority = strval( wp_rand( 1, 50 - $weeks_passed ) );
+				$deprecate_setting_notice_random_priority = strval( wp_rand( 1, 25 - $weeks_passed ) );
 				set_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority', $deprecate_setting_notice_random_priority, WEEK_IN_SECONDS );
 			}
 			if ( '1' === $deprecate_setting_notice_random_priority ) {

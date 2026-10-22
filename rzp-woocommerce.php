@@ -239,7 +239,19 @@ final class RZPWC {
 					return;
 				}
 
-				wp_enqueue_script( 'rzp-woocommerce-admin-script', RZPWC_URL . 'assets/js/admin.js', [ 'jquery' ], RZPWC_VERSION );
+				$dev_suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? (string) time() : RZPWC_VERSION );
+
+				wp_enqueue_script( 'rzp-woocommerce-admin-script', RZPWC_URL . 'assets/js/admin.js', [ 'jquery' ], $dev_suffix );
+				wp_localize_script(
+					'rzp-woocommerce-admin-script',
+					'rzpwcAdmin',
+					[
+						'confirm_disconnect' => __( 'Disconnect your Razorpay account in this mode? Payments in this mode will stop working.', 'rzp-woocommerce' ),
+						'confirm_live'       => __( 'Razorpay is not connected in Live Mode yet. Would you like to connect it now?', 'rzp-woocommerce' ),
+						'confirm_test'       => __( 'Razorpay is not connected in Test Mode yet. Would you like to connect it now?', 'rzp-woocommerce' ),
+					]
+				);
+				wp_enqueue_style( 'rzp-woocommerce-admin-style', RZPWC_URL . 'assets/css/admin.css', [], $dev_suffix );
 			}
 		);
 	}

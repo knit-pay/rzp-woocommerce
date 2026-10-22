@@ -674,6 +674,20 @@ JS;
 
 		$fields = [];
 
+		// Guide merchants without any connection to the payment gateway settings.
+		$connection = get_option( self::SETTINGS_OPTION, [] );
+		$connected_anywhere = ! empty( $connection['access_token'] ) || ! empty( $connection['test_access_token'] )
+			|| ( ! empty( $connection['key_id'] ) && ! empty( $connection['key_secret'] ) )
+			|| ( ! empty( $connection['test_key_id'] ) && ! empty( $connection['test_key_secret'] ) );
+
+		if ( ! $connected_anywhere ) {
+			$fields[] = [
+				'type'        => 'notice',
+				'notice_type' => 'info',
+				'text'        => sprintf( __( 'Connect your Razorpay account first. %s', 'rzp-woocommerce' ), '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ) . '">' . __( 'Connect Razorpay', 'rzp-woocommerce' ) . '</a>' ),
+			];
+		}
+
 		foreach ( self::settings_fields() as $key => $field ) {
 			if ( in_array( $field['type'], [ 'title', 'sectionend', 'info' ], true ) ) {
 				$field['id'] = $key;

@@ -1428,34 +1428,114 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	}
 
 	public function generate_razorpay_connect_button_html( $k, $v ) {
-		$test_access_token = $this->get_option( 'test_access_token' );
-		if ( empty( $test_access_token ) ) {
-			$test_button_color      = '#d63638';
-			$test_button_action     = 'connect';
-			$test_connection_status = 'Disconnected';
-		} else {
-			$test_button_color      = '#00a32a';
-			$test_button_action     = 'disconnect';
-			$test_connection_status = 'Connected';
-		}
+		$testmode = 'yes' === $this->get_option( 'testmode', 'yes' );
+		$active_mode = $testmode ? 'test' : 'live';
 
-		$live_access_token = $this->get_option( 'access_token' );
-		if ( empty( $live_access_token ) ) {
-			$live_button_color      = '#d63638';
-			$live_button_action     = 'connect';
-			$live_connection_status = 'Disconnected';
-		} else {
-			$live_button_color      = '#00a32a';
-			$live_button_action     = 'disconnect';
-			$live_connection_status = 'Connected';
+		$modes = [
+			'live' => [
+				'label'       => __( 'Live Server', 'rzp-woocommerce' ),
+				'description' => __( 'Processes real payments to your bank account.', 'rzp-woocommerce' ),
+				'primary'     => true,
+				'cta'         => __( 'Connect Razorpay (Live)', 'rzp-woocommerce' ),
+			],
+			'test' => [
+				'label'       => __( 'Test Server', 'rzp-woocommerce' ),
+				'description' => __( 'Processes demo transactions using Razorpay test accounts.', 'rzp-woocommerce' ),
+				'cta'         => __( 'Connect Razorpay (Test)', 'rzp-woocommerce' ),
+			],
+		];
+
+		// Precompute connection states to decide what the panel needs to show.
+		$states = [];
+		foreach ( $modes as $mode => $meta ) {
+			$prefix       = ( 'test' === $mode ) ? 'test_' : '';
+			$access_key   = $this->get_option( $prefix . 'key_id' );
+			$access_token = $this->get_option( $prefix . 'access_token' );
+			$connected    = ! empty( $access_token ) || ( ! empty( $access_key ) && ! empty( $this->get_option( $prefix . 'key_secret' ) ) );
+
+			$states[ $mode ] = [
+				'access_key' => $access_key,
+				'connected'  => $connected,
+				'token'      => ! empty( $access_token ),
+				'legacy'     => $connected && empty( $access_token ),
+				'expires_at' => (int) $this->get_option( $prefix . 'expires_at' ),
+			];
 		}
+		$states['live']['expired'] = $states['live']['token'] && 0 < $states['live']['expires_at'] && time() >= $states['live']['expires_at'];
+		$states['test']['expired'] = $states['test']['token'] && 0 < $states['test']['expires_at'] && time() >= $states['test']['expires_at'];
+
+		$all_connected = ! empty( $states['live']['connected'] ) && ! empty( $states['test']['connected'] );
 
 		ob_start();
 		?>
-		<a id="razorpay-platform-connect-test" class="button button-primary button-large" rzp-woocommerce-connect-mode="test" rzp-woocommerce-connect-action="<?php echo $test_button_action; ?>"
-			role="button" style="font-size: 21px;margin: 10px;background: <?php echo $test_button_color; ?>"><?php echo $test_connection_status; ?> in Test Mode</a>
-		<a id="razorpay-platform-connect-live" class="button button-primary button-large" rzp-woocommerce-connect-mode="live" rzp-woocommerce-connect-action="<?php echo $live_button_action; ?>"
-			role="button" style="font-size: 21px;margin: 10px;background: <?php echo $live_button_color; ?>"><?php echo $live_connection_status; ?> in Live Mode</a>
+		<div class="rzpwc-connection-panel" role="group" aria-label="<?php esc_attr_e( 'Razorpay Account Connection', 'rzp-woocommerce' ); ?>">
+			<?php if ( ! $all_connected ) : ?>
+				<p class="rzpwc-connection-note"><?php esc_html_e( 'Connect your Razorpay account below. You will be redirected to Razorpay to authorize the connection and return here automatically.', 'rzp-woocommerce' ); ?></p>
+			<?php endif; ?>
+			<div class="rzpwc-connection-modes">
+			<?php
+			foreach ( $modes as $mode => $meta ) :
+				$state      = $states[ $mode ];
+				$connected  = $state['connected'];
+				$access_key = $state['access_key'];
+				$expires_at = $state['expires_at'];
+				$expired    = $state['expired'];
+				?>
+				<div class="rzpwc-mode rzpwc-mode-<?php echo esc_attr( $mode ); ?> <?php echo esc_attr( $active_mode === $mode ? 'rzpwc-mode-in-use' : '' ); ?>">
+					<div class="rzpwc-mode-head">
+						<span class="rzpwc-mode-name"><?php echo esc_html( $meta['label'] ); ?></span>
+						<?php if ( $active_mode === $mode ) : ?>
+							<span class="rzpwc-in-use-badge"><?php echo esc_html( __( 'Currently in use', 'rzp-woocommerce' ) ); ?></span>
+						<?php endif; ?>
+					</div>
+					<p class="rzpwc-mode-desc"><?php echo esc_html( $meta['description'] ); ?></p>
+
+					<?php if ( $connected ) : ?>
+						<p class="rzpwc-status rzpwc-status-connected <?php echo esc_attr( $state['legacy'] ? 'rzpwc-status-legacy' : '' ); ?>">
+							<span class="rzpwc-status-dot" aria-hidden="true"></span>
+							<span class="rzpwc-status-label">
+							<?php
+							if ( $state['legacy'] ) {
+								esc_html_e( 'Connected (Deprecated API Keys)', 'rzp-woocommerce' );
+							} else {
+								esc_html_e( 'Connected', 'rzp-woocommerce' );
+							}
+							?>
+							</span>
+							<?php if ( ! empty( $access_key ) ) : ?>
+								<code class="rzpwc-key"><?php echo esc_html( ( strlen( $access_key ) > 16 ? substr( $access_key, 0, 16 ) . '...' : $access_key ) ); ?></code>
+							<?php endif; ?>
+						</p>
+						<?php if ( $state['legacy'] ) : ?>
+							<p class="rzpwc-legacy-note"><?php esc_html_e( 'Manual API keys are deprecated. Reconnect your Razorpay account to complete the migration and keep collecting payments in this mode.', 'rzp-woocommerce' ); ?></p>
+						<?php elseif ( $state['token'] && 0 < $expires_at ) : ?>
+							<p class="rzpwc-token-info <?php echo esc_attr( $expired ? 'rzpwc-token-expired' : '' ); ?>">
+								<?php
+								if ( $expired ) {
+									esc_html_e( 'The access token is pending refresh; it renews automatically.', 'rzp-woocommerce' );
+								} else {
+									printf( esc_html__( 'Access token is valid till %s. It refreshes automatically.', 'rzp-woocommerce' ), esc_html( date_i18n( 'M j, Y H:i', $expires_at ) ) );
+								}
+								?>
+							</p>
+						<?php endif; ?>
+						<div class="rzpwc-actions">
+							<?php if ( $state['legacy'] ) : ?>
+								<a href="#" class="button button-primary button-large rzpwc-connect" data-rzpwc-mode="<?php echo esc_attr( $mode ); ?>" role="button"><?php esc_html_e( 'Reconnect with Razorpay', 'rzp-woocommerce' ); ?></a>
+							<?php endif; ?>
+							<a href="#" class="rzpwc-disconnect" data-rzpwc-mode="<?php echo esc_attr( $mode ); ?>" role="button"><?php esc_html_e( 'Disconnect', 'rzp-woocommerce' ); ?></a>
+						</div>
+					<?php else : ?>
+						<p class="rzpwc-status rzpwc-status-disconnected">
+							<span class="rzpwc-status-dot" aria-hidden="true"></span>
+							<span class="rzpwc-status-label"><?php echo esc_html( __( 'Not connected', 'rzp-woocommerce' ) ); ?></span>
+						</p>
+						<a href="#" class="button button-large rzpwc-connect <?php echo esc_attr( ! empty( $meta['primary'] ) ? 'button-primary' : 'button' ); ?>" data-rzpwc-mode="<?php echo esc_attr( $mode ); ?>" role="button"><?php echo esc_html( $meta['cta'] ); ?></a>
+					<?php endif; ?>
+				</div>
+			<?php endforeach; ?>
+			</div>
+		</div>
 		<?php
 
 		return ob_get_clean();

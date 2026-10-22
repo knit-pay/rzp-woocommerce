@@ -7,6 +7,7 @@ Release Date: Oct 20, 2026
 * NEW: Added Razorpay Affordability Widget on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. Feature availability on the connected Razorpay account is verified automatically (supports both OAuth and API key connections).
 * Fix: Deprecation notice was shown to OAuth-connected merchants instead of merchants still using the deprecated manual API-key configuration.
 * Improved: Deprecated-configuration notice now reaches all remaining legacy-key merchants within 25 weeks of the v2.2.0 release.
+* Improved: Redesigned the Razorpay connection setup with per-mode connection status cards, automatic token information, an explicit migration state for deprecated API keys and confirmed disconnect actions.
 * Security: Fixed fatal error in Webhook when a refund event arrives for a payment not created by the plugin.
 * Improved: Webhook now always responds with a clean 200 acknowledgement.
 

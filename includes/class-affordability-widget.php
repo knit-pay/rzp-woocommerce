@@ -159,6 +159,15 @@ final class RZP_WC_Affordability_Widget {
 
 		$transient_key = 'rzpwc_afd_feature_' . md5( $key_id );
 
+		// A cached result belongs to the connection that was verified before it.
+		// When a different connection is in use (merchant switched Razorpay
+		// accounts or reconnects with different credentials), the previous
+		// verification result is stale and must not gate the widget.
+		$checked_for = self::get_setting( $settings, $prefix . 'affordability_widget_feature_checked_for', '' );
+		if ( (string) $checked_for !== (string) $key_id ) {
+			delete_transient( $transient_key );
+		}
+
 		if ( $force ) {
 			delete_transient( $transient_key );
 		}
@@ -168,6 +177,7 @@ final class RZP_WC_Affordability_Widget {
 			self::update_settings(
 				[
 					$prefix . 'affordability_widget_feature_enabled'   => $cached['enabled'] ? 'yes' : 'no',
+					$prefix . 'affordability_widget_feature_checked_for' => $key_id,
 					$prefix . 'affordability_widget_feature_checked_at' => time(),
 				]
 			);
@@ -204,6 +214,7 @@ final class RZP_WC_Affordability_Widget {
 		self::update_settings(
 			[
 				$prefix . 'affordability_widget_feature_enabled'   => $enabled ? 'yes' : 'no',
+				$prefix . 'affordability_widget_feature_checked_for' => $key_id,
 				$prefix . 'affordability_widget_feature_checked_at' => time(),
 			]
 		);

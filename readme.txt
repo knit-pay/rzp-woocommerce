@@ -123,6 +123,7 @@ Please report security bugs found in the source code of the plugin through the [
 4. Payment Success Page
 5. Order History
 6. Refund Area
+7. Affordability Widget on Product Page
 
 == Upgrade Notice ==
 

@@ -853,11 +853,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				if ( hash_equals( $expected_signature, $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ) ) {
 					switch ( $data['event'] ) {
 						case 'payment.authorized':
-							return $this->webhook_update_order( $data );
+							$this->webhook_update_order( $data );
+							break;
 						case 'refund.created':
-							return $this->webhook_refund_order( $data );
-						default:
-							return;
+							$this->webhook_refund_order( $data ); // exits internally after processing.
+							break;
 					}
 				}
 			}

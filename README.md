@@ -17,6 +17,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 #### Plugin Features
 
 * Collect Payments using Razorpay Payment Links.
+* Razorpay Affordability Widget on product pages (EMI, Cardless EMI, Pay Later & Offers).
 * Ability to send Payment Links via SMS and Email notification to customers.
 * One time Payment for your website.
 * Customized "Order Received" message.

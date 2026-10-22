@@ -3,7 +3,7 @@ Contributors: knitpay, gautammkgarg, infosatech
 Tags: razorpay, qrcode, upi, woocommerce, payments,
 Requires at least: 4.6
 Tested up to: 7.2
-Stable tag: 2.2.0
+Stable tag: 2.3.0
 Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -22,6 +22,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 
 * WooCommerce High-Performance Order Storage (HPOS) Support.
 * Collect Payments using Razorpay Payment Links.
+* Razorpay Affordability Widget support on product pages (EMI, Cardless EMI, Pay Later & Offers).
 * Ability to send Payment Links via SMS and Email notification to customers.
 * One time Payment for your website.
 * Customized "Order Received" message.
@@ -70,6 +71,10 @@ Yes. You can access this from 'WooCommerce > Settings > Payments > Razorpay Paym
 
 Go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway', enable/disable options as per your need and save changes.
 
+= How to display the Affordability Widget on product pages? =
+
+Go to 'WooCommerce > Settings > Payments > Affordability Widget', enable the "Affordability Widget" option and save changes. The widget lists EMI, Cardless EMI, Pay Later and offer based payment options to your customers on product pages. Please note that the widget appears only if the Affordability feature is enabled on your Razorpay account, which is verified automatically whenever the settings are saved.
+
 = How to use webhook? What webhooks are supported? =
 
 Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development. 
@@ -110,6 +115,11 @@ Please report security bugs found in the source code of the plugin through the [
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 2.3.0 =
+Release Date: Oct 20, 2026
+
+* NEW: Added Razorpay Affordability Widget feature on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. The widget verifies feature availability on your Razorpay account and works with both OAuth and API key connections.
 
 = 2.2.0 =
 Release Date: Sep 28, 2026

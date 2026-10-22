@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 2.3.0
+Release Date: Oct 20, 2026
+
+* NEW: Added Razorpay Affordability Widget on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. Feature availability on the connected Razorpay account is verified automatically (supports both OAuth and API key connections).
+
 ## 2.1.5
 Release Date: Jun 19, 2026
 

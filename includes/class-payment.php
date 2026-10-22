@@ -231,6 +231,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	public function admin_options() {
 		if ( $this->is_valid_for_use() ) {
 			parent::admin_options();
+
+			// Affordability Widget status row below the gateway settings table.
+			if ( class_exists( 'RZP_WC_Affordability_Widget' ) ) {
+				RZP_WC_Affordability_Widget::gateway_page_footer();
+			}
 		} else {
 			?>
 			<div class="inline error">
@@ -1042,7 +1047,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 * @param string $data Body Data
 	 * @param string $method cURL Method
 	 */
-	private function api_data( $url, $data = null, $method = 'POST' ) {
+	public function api_data( $url, $data = null, $method = 'POST' ) {
 		// api url
 		$api_endpoint = 'https://api.razorpay.com/v1/' . $url;
 

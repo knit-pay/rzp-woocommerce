@@ -3,7 +3,7 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 2.2.0
+ * Version: 2.3.0
  * Author: Team KnitPay
  * Author URI: https://www.knitpay.org/
  * License: GPLv3
@@ -48,7 +48,7 @@ final class RZPWC {
 	 *
 	 * @var string
 	 */
-	public $version = '2.2.0';
+	public $version = '2.3.0';
 
 	/**
 	 * Minimum version of WordPress required to run RZPWC.
@@ -310,6 +310,8 @@ final class RZPWC {
 	public function load_gateway() {
 		if ( class_exists( '\WC_Payment_Gateway' ) ) {
 			require_once RZPWC_PATH . 'includes/class-payment.php';
+			require_once RZPWC_PATH . 'includes/class-affordability-widget.php';
+			RZP_WC_Affordability_Widget::init();
 		}
 	}
 

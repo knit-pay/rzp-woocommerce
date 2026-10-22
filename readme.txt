@@ -8,13 +8,13 @@ Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
-The easiest and most secure way to collect payments with WooCommerce via Razorpay (Cards, NetBanking, UPI, Wallets, QR Code).
+The easiest and most secure way to collect payments with WooCommerce via Razorpay (Cards, NetBanking, UPI, Wallets, QR Code, Apple Pay).
 
 == Description ==
 
 ### Razorpay Payment Links for WooCommerce
 
-This is the Razorpay Payment Gateway plugin for WooCommerce based on [Razorpay Payment Links](https://razorpay.com/payment-links/). Allows you to accept UPI, Credit Cards, Debit Cards, Netbanking, Wallets, and Apple Payment Payments with the WooCommerce plugin.
+This is the Razorpay Payment Gateway plugin for WooCommerce based on [Razorpay Payment Links](https://razorpay.com/payment-links/). Allows you to accept UPI, Credit Cards, Debit Cards, Netbanking, Wallets, EMI and Apple Pay payments with the WooCommerce plugin.
 
 It uses a Razorpay's Payment Link API integration, allowing the customer to pay on your website being redirected to Razorpay's Secure Payment Page. This allows for refunds, works across all browsers, and is compatible with the latest WooCommerce.
 
@@ -22,8 +22,12 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 
 * WooCommerce High-Performance Order Storage (HPOS) Support.
 * Collect Payments using Razorpay Payment Links.
+* Supports OAuth Integration. Integrates without API keys in just 2 clicks.
+* Apple Pay for international payments.
+* WooCommerce Blocks based Checkout Support.
 * Razorpay Affordability Widget support on product pages (EMI, Cardless EMI, Pay Later & Offers).
 * Ability to send Payment Links via SMS and Email notification to customers.
+* Automatic Webhook configuration with payment.authorized and refund.created events.
 * One time Payment for your website.
 * Customized "Order Received" message.
 * Mode of transaction Live and Test Mode.
@@ -37,7 +41,6 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Order note for every Transaction related process.
 * Detailed Payment process Log via WooCommerce Logger.
 * Lots of filters available to customize the output.
-* Supports OAuth Integration. Integrates without API keys in just 2 clicks.
 
 Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star review](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post).
 
@@ -59,13 +62,14 @@ Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star r
 1. Or you can upload the `rzp-woocommerce` folder to the `/wp-content/plugins/` directory manually.
 1. Activate Razorpay Payment Links for WooCommerce from your Plugins page.
 1. After activation go to 'WooCommerce > Settings > Payments > Razorpay Payment Gateway'.
-1. Enable options and save changes.
+1. Connect your Razorpay account (two-click OAuth authentication), enable options as per your need and save changes.
+1. Optional: to display the Affordability Widget on product pages, go to 'WooCommerce > Settings > Payments > Affordability Widget'.
 
 == Frequently Asked Questions ==
 
 = Is there any admin interface for this plugin? =
 
-Yes. You can access this from 'WooCommerce > Settings > Payments > Razorpay Payment Gateway'.
+Yes. The payment gateway settings are available from 'WooCommerce > Settings > Payments > Razorpay Payment Gateway' and the Affordability Widget settings from 'WooCommerce > Settings > Payments > Affordability Widget'.
 
 = How to use this plugin? =
 
@@ -81,15 +85,23 @@ Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin sett
 
 = How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
 
-It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
+Enable the "Payment Reminder" option in the plugin settings. The plugin requests Razorpay to send automatic reminders for its payment links; reminder schedules are managed from your Razorpay Dashboard.
 
 = I want to use Razorpay Web Integration like Automatic Checkout/Manual Checkout (On site Checkout - No Redirection) with webhooks? =
 
-It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
+It needs custom development. Please contact us at https://www.knitpay.org/contact-us/.
 
 = I want to customize the look of the default Razorpay Gateway like colors/text etc. How can I get this? =
 
-It needs custom developement. Please contact us at https://www.knitpay.org/contact-us/.
+It needs custom development. Please contact us at https://www.knitpay.org/contact-us/.
+
+= Which Razorpay API Type should I select? =
+
+Select 'Standard API' (Payment Links API) if your Razorpay account was created on or after 1 September, 2020 - it is the recommended option. 'Legacy API' (Invoices API) is kept only for very old accounts where the standard API does not work.
+
+= How is this plugin different from the official Razorpay WooCommerce plugin? =
+
+This is an independent community-driven plugin built around Razorpay Payment Links: it connects to your Razorpay account over OAuth in two clicks, keeps your store light and fast, and collects payments by redirecting customers to Razorpay's secure hosted payment page. It also ships features like the Razorpay Affordability Widget on product pages.
 
 = Is this plugin compatible with any themes? =
 
@@ -111,6 +123,12 @@ Please report security bugs found in the source code of the plugin through the [
 4. Payment Success Page
 5. Order History
 6. Refund Area
+
+== Upgrade Notice ==
+
+= 2.3.0 =
+
+New: Razorpay Affordability Widget on product pages and a redesigned connection setup. Manual API-key configuration is deprecated; please reconnect your Razorpay account using OAuth.
 
 == Changelog ==
 

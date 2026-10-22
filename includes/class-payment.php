@@ -908,13 +908,13 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		$wc_order_id = $data['payload']['payment']['entity']['notes']['wc_order_id'];
 		$order       = wc_get_order( absint( $wc_order_id ) );
-		$refund_ids  = maybe_unserialize( $order->get_meta( '_rzp_refund_ids', true ) );
-		if ( empty( $refund_ids ) ) {
-			$refund_ids = [];
-		}
 
 		// check if it an order
 		if ( is_a( $order, 'WC_Order' ) ) {
+			$refund_ids = maybe_unserialize( $order->get_meta( '_rzp_refund_ids', true ) );
+			if ( empty( $refund_ids ) ) {
+				$refund_ids = [];
+			}
 			// If it is already marked as unpaid, ignore the event
 			if ( $order->needs_payment() === false && ! $order->has_status( 'refunded' ) && ! in_array( $rzp_refund_id, $refund_ids ) ) {
 				$refund_ids[] = esc_attr( $rzp_refund_id );

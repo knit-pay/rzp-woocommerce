@@ -182,10 +182,23 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 */
 	public function process_admin_options() {
 		$saved = parent::process_admin_options();
-		
+
 		// Take action if Connect/Disconnect button is clicked..
-		$rzp_woocommerce_connect_action = array_key_exists( 'rzp-woocommerce-connect-action', $_POST ) ? \sanitize_text_field( $_POST['rzp-woocommerce-connect-action'] ) : '';
-		$rzp_woocommerce_connect_mode   = array_key_exists( 'rzp-woocommerce-connect-mode', $_POST ) ? \sanitize_text_field( $_POST['rzp-woocommerce-connect-mode'] ) : '';
+		$rzp_woocommerce_connect_action = array_key_exists( 'rzp-woocommerce-connect-action', $_POST ) ? \sanitize_text_field( \wp_unslash( $_POST['rzp-woocommerce-connect-action'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified immediately below before the action is acted upon.
+		$rzp_woocommerce_connect_mode   = array_key_exists( 'rzp-woocommerce-connect-mode', $_POST ) ? \sanitize_text_field( \wp_unslash( $_POST['rzp-woocommerce-connect-mode'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified immediately below.
+
+		if ( '' !== $rzp_woocommerce_connect_action ) {
+			$connect_nonce_verified = isset( $_POST['rzpwc-connect-nonce'] ) && wp_verify_nonce( \sanitize_text_field( \wp_unslash( $_POST['rzpwc-connect-nonce'] ) ), 'rzpwc-connect-action' );
+			if ( ! $connect_nonce_verified ) {
+				\WC_Admin_Settings::add_error( __( 'Razorpay connection action could not be verified. Please try again.', 'rzp-woocommerce' ) );
+				return $saved;
+			}
+
+			if ( ! in_array( $rzp_woocommerce_connect_mode, [ 'live', 'test' ], true ) ) {
+				return $saved;
+			}
+		}
+
 		if ( 'connect' === $rzp_woocommerce_connect_action ) {
 			return $this->connect( $rzp_woocommerce_connect_mode );
 		} elseif ( 'disconnect' === $rzp_woocommerce_connect_action ) {
@@ -243,7 +256,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 					<strong><?php esc_html_e( 'Gateway disabled', 'rzp-woocommerce' ); ?></strong>: 
 							<?php 
 							/* translators: %s: Link to Razorpay currency page */
-							printf( __( 'Razorpay does not support your store currency. Please check the supported currency list from <a href="%s" target="_blank">here</a>.', 'rzp-woocommerce' ), 'https://razorpay.com/docs/international-payments/#supported-currencies' );
+							printf( wp_kses_post( __( 'Razorpay does not support your store currency. Please check the supported currency list from <a href="%s" target="_blank">here</a>.', 'rzp-woocommerce' ) ), esc_url( 'https://razorpay.com/docs/international-payments/#supported-currencies' ) );
 							?>
 				</p>
 			</div>
@@ -301,7 +314,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'default'     => __( 'Thank you for shopping with us. Your account has been charged and your transaction is successful. We will be processing your order soon.', 'rzp-woocommerce' ),
 			],
 			'api_details'             => [
-				'title'       => __( 'API Credentials', 'rzp-woocommerce' ),
+				'title'       => __( 'Razorpay Connection', 'rzp-woocommerce' ),
 				'type'        => 'title',
 				'description' => '',
 			],
@@ -327,6 +340,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			'webhook_details'         => [
 				'title'       => __( 'Razorpay Webhook', 'rzp-woocommerce' ),
 				'type'        => 'title',
+				// translators: 1: Webhook URL of the store, 2: Authorized payment event name, 3: Refund created event name.
 				'description' => sprintf( __( 'Webhook URL: %1$sOnly "%2$s" and "%3$s" action events are supported.', 'rzp-woocommerce' ), '<span style="color: #0073aa;">' . get_home_url() . '/wc-api/rzp-webhook/</span><br>', 'payment.authorized', 'refund.created' ),
 			],
 			'webhook_enabled'         => [
@@ -634,6 +648,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				$refund_ids[] = esc_attr( $body['id'] );
 				
 				// add order note
+				// translators: 1: Refunded amount, 2: Refund id, 3: Refund reason.
 				$order->add_order_note( sprintf( __( 'Amount Refunded. Rs. %1$s<br>Refund ID: %2$s<br>Reason: %3$s', 'rzp-woocommerce' ), esc_attr( round( $body['amount'] / 100 ) ), esc_attr( $body['id'] ), esc_attr( $body['notes']['comment'] ) ), false );
 				
 				// store refund id to meta
@@ -666,6 +681,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		}
 
 		// check GET veriables
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Razorpay hosted page redirect callback; request validity is authenticated below by verifying the razorpay_signature HMAC against the stored credentials.
 		if ( ! isset( $_GET['razorpay_payment_id'], $_GET[ 'razorpay_' . $this->api_mode . '_id' ], $_GET[ 'razorpay_' . $this->api_mode . '_' . $this->ref ], $_GET[ 'razorpay_' . $this->api_mode . '_status' ], $_GET['razorpay_signature'] ) ) {
 			$this->log( 'Missing the nessesary GET variables.' );
 			// create redirect
@@ -675,6 +691,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		$ref        = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_' . $this->ref ] ) );
 		$payment_id = sanitize_text_field( wp_unslash( $_GET['razorpay_payment_id'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// get wc order id
 		$order_id = wc_get_order_id_by_order_key( $ref );
@@ -714,6 +731,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 					[
 						'limit'          => 1,
 						'transaction_id' => $payment_id,
+						// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude -- Single-id exclusion with a bounded limit and an indexed transaction_id lookup, guarding payment-ID reuse.
 						'exclude'        => [ $order_id ],
 						'paginate'       => false,
 						'return'         => 'ids',
@@ -855,7 +873,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				// generate hash
 				$expected_signature = hash_hmac( 'sha256', $post, $this->webhook_secret );
 				// check signatures
-				if ( hash_equals( $expected_signature, $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ) ) {
+				if ( hash_equals( $expected_signature, \wp_unslash( $_SERVER['HTTP_X_RAZORPAY_SIGNATURE'] ) ) ) {
 					switch ( $data['event'] ) {
 						case 'payment.authorized':
 							$this->webhook_update_order( $data );
@@ -938,6 +956,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				);
 
 				// add some order notes
+				// translators: %s: Refund id.
 				$order->add_order_note( sprintf( __( 'Order amount is refunded.<br/>Refund ID: %s', 'rzp-woocommerce' ), esc_attr( $rzp_refund_id ) ), false );
 				
 				// store refund id to meta
@@ -1163,7 +1182,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		if ( ! ( isset( $result->success ) && $result->success ) ) {
 			// Server rejected the request or returned an error. Stop execution.
-			echo isset( $result->data->message ) ? $result->data->message : 'Not receiving a valid response from the Knit Pay OAuth Server. Please try again after some time or report the issue to the support team.';
+			echo isset( $result->data->message ) ? esc_html( $result->data->message ) : 'Not receiving a valid response from the Knit Pay OAuth Server. Please try again after some time or report the issue to the support team.';
 			exit;
 		}
 
@@ -1195,10 +1214,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- External OAuth callback; CSRF is validated below by binding the `state` parameter to a transient created during the connection initiated by THIS site.
-		$code                      = isset( $_GET['code'] ) ? sanitize_text_field( $_GET['code'] ) : null;
-		$state                     = isset( $_GET['state'] ) ? sanitize_text_field( $_GET['state'] ) : null;
-		$gateway_id                = isset( $_GET['gateway_id'] ) ? sanitize_text_field( $_GET['gateway_id'] ) : null;
-		$knitpay_oauth_auth_status = isset( $_GET['knitpay_oauth_auth_status'] ) ? sanitize_text_field( $_GET['knitpay_oauth_auth_status'] ) : null;
+		$code                      = isset( $_GET['code'] ) ? \sanitize_text_field( \wp_unslash( $_GET['code'] ) ) : null;
+		$state                     = isset( $_GET['state'] ) ? \sanitize_text_field( \wp_unslash( $_GET['state'] ) ) : null;
+		$gateway_id                = isset( $_GET['gateway_id'] ) ? \sanitize_text_field( \wp_unslash( $_GET['gateway_id'] ) ) : null;
+		$knitpay_oauth_auth_status = isset( $_GET['knitpay_oauth_auth_status'] ) ? \sanitize_text_field( \wp_unslash( $_GET['knitpay_oauth_auth_status'] ) ) : null;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Don't interfere with callbacks of other plugins (e.g. Knit Pay) sharing the same OAuth server.
@@ -1514,6 +1533,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 								if ( $expired ) {
 									esc_html_e( 'The access token is pending refresh; it renews automatically.', 'rzp-woocommerce' );
 								} else {
+									// translators: %s: Token expiry date and time.
 									printf( esc_html__( 'Access token is valid till %s. It refreshes automatically.', 'rzp-woocommerce' ), esc_html( date_i18n( 'M j, Y H:i', $expires_at ) ) );
 								}
 								?>
@@ -1535,6 +1555,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				</div>
 			<?php endforeach; ?>
 			</div>
+			<?php wp_nonce_field( 'rzpwc-connect-action', 'rzpwc-connect-nonce' ); // Authorizes connect/disconnect actions submitted by this panel. ?>
 		</div>
 		<?php
 

@@ -1,9 +1,9 @@
 === Razorpay Payment Links for WooCommerce ===
 Contributors: knitpay, gautammkgarg, infosatech
-Tags: razorpay, qrcode, upi, woocommerce, payments,
-Requires at least: 4.6
+Tags: razorpay, qrcode, upi, payments, emi
+Requires at least: 5.0
 Tested up to: 7.2
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -135,8 +135,15 @@ New: Razorpay Affordability Widget on product pages and a redesigned connection 
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
 
+= 2.3.1 =
+Release Date: Oct 23, 2026
+
+* NEW: The Affordability Widget settings page and verification notice explain that the widget does not work with Test Mode; Razorpay provides no EMI/Pay Later/Offer data for test accounts.
+* Fix: Plugin Check compliance - nonce verification for connect/disconnect actions, unslashed input handling, output escaping, translators comments, explicit script footer loading and a prefixed block filter name (the old `upiwc_order_button_text` filter stays functional for backward compatibility).
+* Changed: Minimum WordPress version raised to 5.0 (required by the blocks integration's script translation API).
+
 = 2.3.0 =
-Release Date: Oct 20, 2026
+Release Date: Oct 22, 2026
 
 * NEW: Added Razorpay Affordability Widget feature on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. The widget verifies feature availability on your Razorpay account and works with both OAuth and API key connections.
 * Improved: Deprecated-configuration notice now reaches all remaining legacy-key merchants within 25 weeks.

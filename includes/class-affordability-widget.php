@@ -184,6 +184,7 @@ final class RZP_WC_Affordability_Widget {
 			if ( ! $force && isset( $cached['error'] ) ) {
 				$this->last_verify_status = [
 					'type'    => 'error',
+					// translators: %s: error message.
 					'message' => sprintf( __( 'Could not verify the Razorpay Affordability Widget feature: %s', 'rzp-woocommerce' ), esc_html( $cached['error'] ) ),
 				];
 			}
@@ -224,6 +225,7 @@ final class RZP_WC_Affordability_Widget {
 		if ( $error ) {
 			$this->last_verify_status = [
 				'type'    => 'error',
+				// translators: %s: error message.
 				'message' => sprintf( __( 'Could not verify the Razorpay Affordability Widget feature: %s', 'rzp-woocommerce' ), esc_html( $error ) ),
 			];
 		} elseif ( $enabled ) {
@@ -234,7 +236,7 @@ final class RZP_WC_Affordability_Widget {
 		} else {
 			$this->last_verify_status = [
 				'type'    => 'warning',
-				'message' => __( 'The Razorpay Affordability Widget is not enabled on your Razorpay account yet. Please activate the Affordability Suite from your Razorpay Dashboard or contact Razorpay support to enable it.', 'rzp-woocommerce' ),
+				'message' => $this->get_feature_disabled_message(),
 			];
 		}
 	}
@@ -278,10 +280,31 @@ final class RZP_WC_Affordability_Widget {
 		}
 
 		if ( ! $enabled && ! empty( $last_error ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped at the point of output (verify_status_notice).
 			throw new \Exception( $last_error );
 		}
 
 		return $enabled;
+	}
+
+	/**
+	 * The message shown when the widget feature is not available for the current mode.
+	 *
+	 * @return string
+	 */
+	private function get_feature_disabled_message() {
+		$settings  = self::get_settings();
+		$test_mode = 'yes' === self::get_setting( $settings, 'testmode', 'no' );
+
+		if ( $test_mode ) {
+			$live_flag = self::get_setting( $settings, 'affordability_widget_feature_enabled', 'no' );
+
+			if ( 'yes' === $live_flag ) {
+				return __( 'The Razorpay Affordability Widget does not work in Test Mode: Razorpay provides no EMI/Pay Later/Offer data for test accounts, and its feature is reported disabled for your account in test mode. Switch the payment gateway to Live Mode to display the widget.', 'rzp-woocommerce' );
+			}
+		}
+
+		return __( 'The Razorpay Affordability Widget is not enabled on your Razorpay account yet. Please activate the Affordability Suite from your Razorpay Dashboard or contact Razorpay support to enable it.', 'rzp-woocommerce' );
 	}
 
 	/**
@@ -368,7 +391,9 @@ final class RZP_WC_Affordability_Widget {
 			'rzpwc-affordability-widget',
 			'https://cdn.razorpay.com/widgets/affordability/affordability.js',
 			[ 'jquery' ],
-			null
+			// phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- Third party widget served from Razorpay's CDN; intentional and versionless.
+			null,
+			true
 		);
 
 		$params = self::widget_params( $key, $amount, $settings );
@@ -560,11 +585,14 @@ final class RZP_WC_Affordability_Widget {
 			$feature_ok = 'yes' === self::get_setting( $settings, $prefix . 'affordability_widget_feature_enabled', 'no' );
 
 			if ( $feature_ok ) {
+				// translators: 1: opening link tag, 2: closing link tag.
 				$message = sprintf( __( 'The Affordability Widget is active on your product pages. Manage its settings %1$shere%2$s.', 'rzp-woocommerce' ), '<a href="' . esc_url( $widget_url ) . '">', '</a>' );
 			} else {
+				// translators: 1: opening link tag, 2: closing link tag.
 				$message = sprintf( __( 'The Affordability Widget is enabled, but the feature has not been verified on your Razorpay account yet. Please verify %1$shere%2$s.', 'rzp-woocommerce' ), '<a href="' . esc_url( $widget_url ) . '">', '</a>' );
 			}
 		} else {
+			// translators: 1: opening link tag, 2: closing link tag.
 			$message = sprintf( __( 'NEW: Display Card EMI, Cardless EMI, Pay Later and Offer information to your customers on product pages before checkout. %1$sConfigure it now%2$s.', 'rzp-woocommerce' ), '<a href="' . esc_url( $widget_url ) . '">', '</a>' );
 		}
 
@@ -695,7 +723,16 @@ JS;
 			$fields[] = [
 				'type'        => 'notice',
 				'notice_type' => 'info',
-				'text'        => sprintf( __( 'Connect your Razorpay account first. %s', 'rzp-woocommerce' ), '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ) . '">' . __( 'Connect Razorpay', 'rzp-woocommerce' ) . '</a>' ),
+				// translators: 1: opening link tag, 2: closing link tag.
+				'text'        => sprintf( __( 'Connect your Razorpay account first. %1$sConnect Razorpay%2$s', 'rzp-woocommerce' ), '<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=wc-razorpay' ) ) . '">', '</a>' ),
+			];
+		}
+
+		if ( 'yes' === self::get_setting( self::get_settings(), 'testmode', 'no' ) ) {
+			$fields[] = [
+				'type'        => 'notice',
+				'notice_type' => 'warning',
+				'text'        => __( 'The Affordability Widget does not work with Test Mode: Razorpay provides no EMI/Pay Later/Offer data for test accounts. The widget appears on product pages only when the payment gateway is in Live Mode.', 'rzp-woocommerce' ),
 			];
 		}
 
@@ -788,6 +825,7 @@ JS;
 			'affordability_widget_limited_emi_providers' => [
 				'title'       => __( 'Limited Card EMI Providers:', 'rzp-woocommerce' ),
 				'type'        => 'textarea',
+				// translators: 1: opening link tag, 2: closing link tag.
 				'description' => sprintf( __( 'In case you want to display limited Card EMI options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-gateway/affordability/faqs/#2-what-are-the-standard-credit-card-interest">', '</a>' ),
 				'desc_tip'    => false,
 			],
@@ -802,6 +840,7 @@ JS;
 			'affordability_widget_limited_cardless_emi_providers' => [
 				'title'       => __( 'Limited Cardless EMI Providers:', 'rzp-woocommerce' ),
 				'type'        => 'textarea',
+				// translators: 1: opening link tag, 2: closing link tag.
 				'description' => sprintf( __( 'In case you want to display limited Cardless EMI options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-methods/emi/cardless-emi/">', '</a>' ),
 				'desc_tip'    => false,
 			],
@@ -816,6 +855,7 @@ JS;
 			'affordability_widget_limited_pay_later_providers' => [
 				'title'       => __( 'Limited Pay Later Providers:', 'rzp-woocommerce' ),
 				'type'        => 'textarea',
+				// translators: 1: opening link tag, 2: closing link tag.
 				'description' => sprintf( __( 'In case you want to display limited Pay Later options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-methods/pay-later/">', '</a>' ),
 				'desc_tip'    => false,
 			],

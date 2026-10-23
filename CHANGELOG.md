@@ -1,8 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 2.3.1
+Release Date: Oct 23, 2026
+
+* Warning: The Affordability Widget settings page and its verification notice now explain that the widget does not work with Test Mode (Razorpay provides no EMI/Offer data for test accounts).
+* Fix: Plugin Check compliance — nonce verification for connect/disconnect actions, unslashed input handling, output escaping, translators comments, explicit script footer loading, and a prefixed block filter name (`upiwc_order_button_text` kept functional via deprecation).
+* Changed: Minimum WordPress version raised to 5.0 (required by the blocks integration's script translation API).
+
 ## 2.3.0
-Release Date: Oct 20, 2026
+Release Date: Oct 22, 2026
 
 * NEW: Added Razorpay Affordability Widget on product pages with Offers, Card EMI, Cardless EMI and Pay Later options. Feature availability on the connected Razorpay account is verified automatically (supports both OAuth and API key connections).
 * Fix: Deprecation notice was shown to OAuth-connected merchants instead of merchants still using the deprecated manual API-key configuration.

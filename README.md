@@ -42,7 +42,7 @@ Like Razorpay Payment Links for WooCommerce plugin? Consider leaving a [5 star r
 
 ### Compatibility
 
-* This plugin is fully compatible with WordPress Version 4.6 and beyond and also compatible with any WordPress theme.
+* This plugin is fully compatible with WordPress Version 5.0 and beyond and also compatible with any WordPress theme.
 
 ### Support
 * Community support via the [support forums](https://wordpress.org/support/plugin/rzp-woocommerce) at wordpress.org.

@@ -3,12 +3,13 @@
  * Plugin Name: Razorpay Payment Links for WooCommerce
  * Plugin URI: https://wordpress.org/plugins/rzp-woocommerce/
  * Description: The easiest and most secure solution to collect payments with WooCommerce. Allow customers to securely pay via Razorpay (Credit/Debit Cards, NetBanking, UPI, Wallets, QR Code).
- * Version: 2.3.0
+ * Version: 2.3.1
  * Author: Team KnitPay
  * Author URI: https://www.knitpay.org/
  * License: GPLv3
  * Text Domain: rzp-woocommerce
  * Domain Path: /languages
+ * Requires at least: 5.0
  * WC requires at least: 2.4
  * WC tested up to: 9.3
  * Requires Plugins: woocommerce
@@ -48,7 +49,7 @@ final class RZPWC {
 	 *
 	 * @var string
 	 */
-	public $version = '2.3.0';
+	public $version = '2.3.1';
 
 	/**
 	 * Minimum version of WordPress required to run RZPWC.
@@ -211,9 +212,6 @@ final class RZPWC {
 	 * Initialize WordPress action and filter hooks.
 	 */
 	private function init_actions() {
-		// Make sure it is loaded before setup_modules and load_modules.
-		add_action( 'plugins_loaded', [ $this, 'localization_setup' ], 9 );
-
 		// Add plugin action links.
 		add_filter( 'plugin_row_meta', [ $this, 'plugin_row_meta' ], 10, 2 );
 		add_filter( 'plugin_action_links_' . RZPWC_BASENAME, [ $this, 'action_links' ] );
@@ -241,7 +239,7 @@ final class RZPWC {
 
 				$dev_suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? (string) time() : RZPWC_VERSION );
 
-				wp_enqueue_script( 'rzp-woocommerce-admin-script', RZPWC_URL . 'assets/js/admin.js', [ 'jquery' ], $dev_suffix );
+				wp_enqueue_script( 'rzp-woocommerce-admin-script', RZPWC_URL . 'assets/js/admin.js', [ 'jquery' ], $dev_suffix, true );
 				wp_localize_script(
 					'rzp-woocommerce-admin-script',
 					'rzpwcAdmin',
@@ -254,13 +252,6 @@ final class RZPWC {
 				wp_enqueue_style( 'rzp-woocommerce-admin-style', RZPWC_URL . 'assets/css/admin.css', [], $dev_suffix );
 			}
 		);
-	}
-
-	/**
-	 * Initialize plugin for localization.
-	 */
-	public function localization_setup() {
-		load_plugin_textdomain( 'rzp-woocommerce', false, dirname( RZPWC_BASENAME ) . '/languages' ); 
 	}
 
 	/**
@@ -379,7 +370,7 @@ final class RZPWC {
 			
 			<div class="notice notice-success">
 				<p><?php echo wp_kses_post( 'Hey, I noticed you\'ve been using Razorpay Payment Links for WooCommerce for more than 1 week – that’s awesome! Could you please do me a BIG favor and give it a <strong>5-star</strong> rating on WordPress? Just to help us spread the word and boost my motivation.', 'rzp-woocommerce' ); ?></p>
-				<p><a href="https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?filter=5#new-post" target="_blank" class="button button-secondary" rel="noopener"><?php esc_html_e( 'Ok, you deserve it', 'rzp-woocommerce' ); ?></a>&nbsp;
+				<p><a href="https://wordpress.org/support/plugin/rzp-woocommerce/reviews/#new-post" target="_blank" class="button button-secondary" rel="noopener"><?php esc_html_e( 'Ok, you deserve it', 'rzp-woocommerce' ); ?></a>&nbsp;
 				<a href="<?php echo esc_url( $dismiss ); ?>" class="already-did"><strong><?php esc_html_e( 'I already did', 'rzp-woocommerce' ); ?></strong></a>&nbsp;<strong>|</strong>
 				<a href="<?php echo esc_url( $no_thanks ); ?>" class="later"><strong><?php esc_html_e( 'Nope&#44; maybe later', 'rzp-woocommerce' ); ?></strong></a></p>
 			</div>
@@ -463,7 +454,7 @@ final class RZPWC {
 
 		check_admin_referer( 'rzpwc_notice_nonce' );
 
-		$notice      = sanitize_text_field( $_REQUEST['rzpwc_notice_action'] );
+		$notice      = sanitize_text_field( wp_unslash( $_REQUEST['rzpwc_notice_action'] ) );
 		$notice      = explode( '_', $notice );
 		$notice_type = end( $notice );
 		array_pop( $notice );

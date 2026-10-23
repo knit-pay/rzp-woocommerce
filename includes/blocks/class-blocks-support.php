@@ -55,9 +55,8 @@ final class RZP_WC_Payment_Gateway_Blocks_Support extends AbstractPaymentMethodT
 			true
 		);
 
-		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( 'rzpwc-payment-blocks', 'rzp-woocommerce', RZPWC_PATH . 'languages/' );
-		}
+		// Requires WordPress 5.0+, which is the plugin's declared minimum.
+		wp_set_script_translations( 'rzpwc-payment-blocks', 'rzp-woocommerce', RZPWC_PATH . 'languages/' );
 
 		return [ 'rzpwc-payment-blocks' ];
 	}
@@ -72,7 +71,17 @@ final class RZP_WC_Payment_Gateway_Blocks_Support extends AbstractPaymentMethodT
 			'title'       => $this->get_setting( 'title' ),
 			'description' => $this->get_setting( 'description' ),
 			'supports'    => $this->get_supported_features(),
-			'button_text' => apply_filters( 'upiwc_order_button_text', __( 'Proceed to Payment', 'rzp-woocommerce' ) ),
+			// The prefixed filter name is preferred; the deprecated un-prefixed name stays
+			// functional for backward compatibility with integrations created before 2.3.1.
+			'button_text' => apply_filters(
+				'rzpwc_order_button_text',
+				apply_filters_deprecated(
+					'upiwc_order_button_text',
+					[ __( 'Proceed to Payment', 'rzp-woocommerce' ) ],
+					'2.3.1',
+					'rzpwc_order_button_text'
+				)
+			),
 		];
 	}
 

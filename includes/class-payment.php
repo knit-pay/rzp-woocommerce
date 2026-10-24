@@ -1169,9 +1169,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode(
 					[
-						'admin_url'  => admin_url(),
-						'gateway_id' => self::GATEWAY_ID,
-						'mode'       => $mode,
+						'admin_url'       => admin_url(),
+						'gateway_id'      => self::GATEWAY_ID,
+						'mode'            => $mode,
+						'knitpay_version' => RZPWC_VERSION,
 					]
 				),
 				'timeout' => 60,
@@ -1252,10 +1253,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode(
 					[
-						'code'       => $code,
-						'state'      => $state,
-						'gateway_id' => self::GATEWAY_ID,
-						'mode'       => $mode,
+						'code'            => $code,
+						'state'           => $state,
+						'gateway_id'      => self::GATEWAY_ID,
+						'mode'            => $mode,
+						'knitpay_version' => RZPWC_VERSION,
 					]
 				),
 				'timeout' => 90,
@@ -1312,9 +1314,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode(
 					[
-						'refresh_token' => $refresh_token,
-						'gateway_id'    => self::GATEWAY_ID,
-						'mode'          => $mode,
+						'refresh_token'   => $refresh_token,
+						'gateway_id'      => self::GATEWAY_ID,
+						'mode'            => $mode,
+						'knitpay_version' => RZPWC_VERSION,
 					]
 				),
 				'timeout' => 90,

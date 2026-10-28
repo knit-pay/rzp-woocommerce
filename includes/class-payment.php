@@ -442,10 +442,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			];
 		}
 
-		$amount = $order->get_total();
-		if ( $this->gateway_fee === 'yes' ) {
-			$amount = apply_filters( 'rzpwc_charge_custom_tax_amount', ( $amount / 97.64 ) * 100, $amount, $order );
-		}
+		$amount_paise = self::calculate_payment_link_amount( $order, $this->gateway_fee );
 
 		/**
 		 * Array with parameters for API interaction
@@ -453,7 +450,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$args = [
 			'type'            => 'link',
 			'view_less'       => 1,
-			'amount'          => (int) round( $amount * 100 ),
+			'amount'          => $amount_paise,
 			'currency'        => $this->get_wc_order_currency( $order ),
 			'description'     => 'Order ID: ' . $order->get_order_number(),
 			$this->ref        => substr( $order->get_order_key(), 0, 40 ),
@@ -691,6 +688,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		$ref        = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_' . $this->ref ] ) );
 		$payment_id = sanitize_text_field( wp_unslash( $_GET['razorpay_payment_id'] ) );
+		$link_id    = sanitize_text_field( wp_unslash( $_GET[ 'razorpay_' . $this->api_mode . '_id' ] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// get wc order id
@@ -704,6 +702,25 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			$title = __( 'Order can\'t be found against this payment. If the money deducted from your account, please contact with Site Administrator for further action. Thanks for your understanding.', 'rzp-woocommerce' );
 					
 			wp_die( esc_html( $title ), esc_html( get_bloginfo( 'name' ) ) );
+			exit;
+		}
+
+		// the payment must belong to the link stored for this order - the callback may report a different (older/stale) link id
+		$stored_link_id = (string) $order->get_meta( '_rzp_invoice_id', true );
+
+		if ( $stored_link_id !== $link_id ) {
+			$this->log( 'Payment Link ID mismatch! Stored: ' . $stored_link_id . ' | Received: ' . $link_id );
+
+			/* translators: 1: Payment ID. */
+			$order->add_order_note( sprintf( __( 'Payment (Transaction ID: %1$s) was received through a different payment link than the one stored for this order and was not processed automatically - review it manually before fulfilling the order.', 'rzp-woocommerce' ), esc_html( $payment_id ) ), false );
+
+			wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
+			exit;
+		}
+
+		// the payment link amount must match the current order amount - otherwise the customer paid an outdated link
+		if ( ! $this->is_payment_link_amount_valid( $order, $payment_id ) ) {
+			wp_safe_redirect( apply_filters( 'rzpwc_after_payment_redirect', $this->get_return_url( $order ), $order ) );
 			exit;
 		}
 
@@ -840,6 +857,150 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		return $text;
 	}
+
+	/**
+	 * Compute the payable amount (in paise) for the payment link, including gateway fee adjustments.
+	 *
+	 * @param WC_Order $order       Order object.
+	 * @param string   $gateway_fee Whether gateway fees are collected from the customer.
+	 * @return int
+	 */
+	private static function calculate_payment_link_amount( $order, $gateway_fee ) {
+		$amount = $order->get_total();
+
+		if ( 'yes' === $gateway_fee ) {
+			$amount = apply_filters( 'rzpwc_charge_custom_tax_amount', ( $amount / 97.64 ) * 100, $amount, $order );
+		}
+
+		return (int) round( $amount * 100 );
+	}
+
+	/**
+	 * Check whether the stored payment link amount still matches the current order amount.
+	 *
+	 * When the amounts differ (or the link cannot be verified), a review note is added to the
+	 * order and false is returned so the caller can leave the order unprocessed.
+	 *
+	 * @param WC_Order $order      Order object.
+	 * @param string   $payment_id Payment ID used in the review note.
+	 * @return bool
+	 */
+	private function is_payment_link_amount_valid( $order, $payment_id ) {
+		$stored_link_id = (string) $order->get_meta( '_rzp_invoice_id', true );
+
+		if ( empty( $stored_link_id ) ) {
+			return true;
+		}
+
+		$link_response = $this->api_data( $this->api_mode . 's/' . $stored_link_id, null, 'GET' );
+		$link_body     = is_wp_error( $link_response ) ? null : json_decode( wp_remote_retrieve_body( $link_response ), true );
+
+		$this->log( 'Razorpay response on fetching the Payment Link: ' . wc_print_r( $link_body, true ) );
+
+		if ( isset( $link_body['amount'] ) && (int) $link_body['amount'] === self::calculate_payment_link_amount( $order, $this->gateway_fee ) ) {
+			return true;
+		}
+
+		$this->log( 'Payment amount mismatch! Link amount: ' . ( isset( $link_body['amount'] ) ? $link_body['amount'] : 'unknown' ) . ' | Expected: ' . self::calculate_payment_link_amount( $order, $this->gateway_fee ) );
+
+		/* translators: 1: Payment ID. */
+		$order->add_order_note( sprintf( __( 'Payment (Transaction ID: %1$s) was received against a payment link whose amount does not match the current order amount and was not processed automatically. Please review this order manually.', 'rzp-woocommerce' ), esc_html( $payment_id ) ), false );
+
+		return false;
+	}
+
+	/**
+	 * Cancel the stored payment link when the order amount no longer matches it.
+	 *
+	 * Hooked to woocommerce_update_order. When the Razorpay cancellation fails, the link is
+	 * still removed from the order so a fresh link is generated on the next payment attempt.
+	 *
+	 * @param int|string $order_id Order ID.
+	 * @param WC_Order   $order    Order object.
+	 * @return void
+	 */
+	public static function maybe_invalidate_payment_link( $order_id, $order = null ) {
+		if ( ! $order instanceof WC_Order ) {
+			$order = wc_get_order( $order_id );
+		}
+
+		if ( ! $order instanceof WC_Order || ! $order->needs_payment() || 'wc-razorpay' !== $order->get_payment_method() ) {
+			return;
+		}
+
+		$pay_url = $order->get_meta( '_rzp_payment_url', true );
+		$inv_id  = $order->get_meta( '_rzp_invoice_id', true );
+
+		if ( empty( $pay_url ) || empty( $inv_id ) ) {
+			return;
+		}
+
+		$gateway = new self();
+
+		// get the stored link from Razorpay to compare its amount with the current order amount
+		$link_amount   = null;
+		$link_response = $gateway->api_data( $gateway->api_mode . 's/' . $inv_id, null, 'GET' );
+
+		if ( ! is_wp_error( $link_response ) ) {
+			$link_body = json_decode( wp_remote_retrieve_body( $link_response ), true );
+
+			if ( isset( $link_body['amount'] ) ) {
+				$link_amount = (int) $link_body['amount'];
+			}
+		}
+
+		if ( null === $link_amount ) {
+			// the link amount cannot be verified - remove it instead of assuming it still matches
+			self::log( 'Could not fetch the payment link; removing it from the order.', 'error' );
+		} elseif ( $link_amount === self::calculate_payment_link_amount( $order, $gateway->gateway_fee ) ) {
+			return;
+		}
+
+		// the link being already cancelled on Razorpay is the outcome we want - no need to call the API again
+		$cancelled = isset( $link_body['status'] ) && 'cancelled' === $link_body['status'];
+
+		if ( ! $cancelled ) {
+			// cancel the old link - retry up to 3 times on transport errors; the local metas are removed regardless of the result
+			$cancel_response = null;
+
+			for ( $attempt = 1; $attempt <= 3; $attempt++ ) {
+				$cancel_response = $gateway->api_data( $gateway->api_mode . 's/' . $inv_id . '/cancel' );
+
+				if ( ! is_wp_error( $cancel_response ) ) {
+					break;
+				}
+
+				sleep( 1 );
+			}
+
+			$cancel_body = is_wp_error( $cancel_response ) ? null : json_decode( wp_remote_retrieve_body( $cancel_response ), true );
+			$cancelled   = isset( $cancel_body['status'] ) && 'cancelled' === $cancel_body['status'];
+
+			// Razorpay reports that the link was already cancelled earlier - that is the outcome we want
+			if ( ! $cancelled && isset( $cancel_body['error']['description'] ) && false !== stripos( $cancel_body['error']['description'], 'already' ) && false !== stripos( $cancel_body['error']['description'], 'cancel' ) ) {
+				$cancelled = true;
+			}
+		}
+
+		$order->delete_meta_data( '_rzp_payment_url' );
+		$order->delete_meta_data( '_rzp_invoice_id' );
+		$order->save();
+
+		$order->add_order_note( __( 'Old payment link was removed because it no longer matched the order amount (or could not be verified). A new link will be generated on the next payment attempt.', 'rzp-woocommerce' ), false );
+
+		if ( ! $cancelled ) {
+			if ( is_wp_error( $cancel_response ) ) {
+				$reason = $cancel_response->get_error_message();
+			} elseif ( isset( $cancel_body['error']['description'] ) ) {
+				$reason = $cancel_body['error']['description'];
+			} else {
+				$reason = __( 'Unknown error', 'rzp-woocommerce' );
+			}
+
+			/* translators: %s: error message returned by Razorpay. */
+			$order->add_order_note( sprintf( __( 'The old payment link could not be cancelled on Razorpay: %s', 'rzp-woocommerce' ), esc_html( $reason ) ), false );
+		}
+	}
 	
 	/**
 	 * Custom Razorpay checkout URL.
@@ -905,6 +1066,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		// check if it an order
 		if ( is_a( $order, 'WC_Order' ) ) {
 			if ( ! empty( $rzp_status ) && $rzp_status === 'authorized' && $order->needs_payment() === true ) {
+				// the payment link amount must match the current order amount - otherwise the customer paid an outdated link
+				if ( ! $this->is_payment_link_amount_valid( $order, sanitize_text_field( $rzp_payment_id ) ) ) {
+					return;
+				}
+
 				// update the payment reference
 				$order->payment_complete( sanitize_text_field( $rzp_payment_id ) );
 				

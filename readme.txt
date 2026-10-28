@@ -99,6 +99,10 @@ It needs custom development. Please contact us at https://www.knitpay.org/contac
 
 Select 'Standard API' (Payment Links API) if your Razorpay account was created on or after 1 September, 2020 - it is the recommended option. 'Legacy API' (Invoices API) is kept only for very old accounts where the standard API does not work.
 
+= Does this plugin support partial payments? =
+
+No. Payment links are always created for the full order amount, and WooCommerce has no built-in way to record a remaining balance. Please keep partial payments disabled for links created by this plugin (including from the Razorpay Dashboard); payments for less than the full amount cannot be tracked and may need manual review.
+
 = How is this plugin different from the official Razorpay WooCommerce plugin? =
 
 This is an independent community-driven plugin built around Razorpay Payment Links: it connects to your Razorpay account over OAuth in two clicks, keeps your store light and fast, and collects payments by redirecting customers to Razorpay's secure hosted payment page. It also ships features like the Razorpay Affordability Widget on product pages.

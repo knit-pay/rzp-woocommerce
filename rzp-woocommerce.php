@@ -226,6 +226,9 @@ final class RZPWC {
 		add_action( 'plugins_loaded', [ $this, 'load_gateway' ] );
 		add_action( 'woocommerce_blocks_loaded', [ $this, 'block_support' ] );
 		
+		// Invalidate stale payment links on every order update, in every save path, even where the gateway instance is not constructed.
+		add_action( 'woocommerce_update_order', [ 'RZP_WC_Payment_Gateway', 'maybe_invalidate_payment_link' ], 20, 2 );
+		
 		// Load admin notices.
 		add_action( 'admin_notices', [ $this, 'admin_notice' ] );
 		add_action( 'admin_init', [ $this, 'dismiss_notice' ] );

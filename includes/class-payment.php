@@ -626,7 +626,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$args = apply_filters( 'rzpwc_payment_refund_payload', $args, $order );
 
 		$this->log( 'Data sent for Refund: ' . wc_print_r( $args, true ) );
-	
+
 		// make api request
 		$response = $this->api_data( 'payments/' . $payment_id . '/refund', wp_json_encode( $args ) );
 
@@ -1095,17 +1095,30 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		/*
 			* Build API interaction
 			*/
-		$response = wp_remote_request(
-			$api_endpoint,
-			[
-				'body'    => $data,
-				'method'  => $method,
-				'headers' => [
-					'Content-Type'  => 'application/json',
-					'Authorization' => $auth,
-				],
-			]
-		);
+		$request_args = [
+			'body'    => $data,
+			'method'  => $method,
+			'timeout' => 30,
+			'headers' => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => $auth,
+			],
+		];
+
+		$response = wp_remote_request( $api_endpoint, $request_args );
+
+		// Retry once with a refreshed access token when Razorpay rejects it.
+		if ( ! empty( $this->access_token ) && ! is_wp_error( $response ) && 401 === (int) wp_remote_retrieve_response_code( $response ) ) {
+			$mode           = 'yes' === $this->get_option( 'testmode' ) ? 'test' : 'live';
+			$setting_prefix = 'test' === $mode ? 'test_' : '';
+
+			$this->refresh_access_token( $mode );
+			$this->init_settings();
+
+			$request_args['headers']['Authorization'] = 'Bearer ' . $this->get_option( $setting_prefix . 'access_token' );
+
+			$response = wp_remote_request( $api_endpoint, $request_args );
+		}
 
 		return $response;
 	}

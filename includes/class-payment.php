@@ -340,8 +340,8 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			'webhook_details'         => [
 				'title'       => __( 'Razorpay Webhook', 'rzp-woocommerce' ),
 				'type'        => 'title',
-				// translators: 1: Webhook URL of the store, 2: Authorized payment event name, 3: Refund created event name.
-				'description' => sprintf( __( 'Webhook URL: %1$sOnly "%2$s" and "%3$s" action events are supported.', 'rzp-woocommerce' ), '<span style="color: #0073aa;">' . get_home_url() . '/wc-api/rzp-webhook/</span><br>', 'payment.authorized', 'refund.created' ),
+				// translators: 1: Webhook URL of the store, 2: Authorized payment event name, 3: Refund created event name, 4: Payment link paid event name.
+				'description' => sprintf( __( 'Webhook URL: %1$sWhen you save these settings, the plugin attempts to register this webhook automatically for the "%2$s", "%3$s" and "%4$s" events. If it is not listed under Razorpay "Settings > Webhooks", add it manually with the same URL and events.', 'rzp-woocommerce' ), '<span style="color: #0073aa;">' . get_home_url() . '/wc-api/rzp-webhook/</span><br>', 'payment.authorized', 'refund.created', 'payment_link.paid' ),
 			],
 			'webhook_enabled'         => [
 				'title'       => __( 'Razorpay Webhook:', 'rzp-woocommerce' ),
@@ -354,7 +354,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			'webhook_secret'          => [
 				'title'       => __( 'Webhook Secret Key:', 'rzp-woocommerce' ),
 				'type'        => 'password',
-				'description' => __( 'The webhook secret can be generated from "Webhooks" section of Razorpay Dashboard.', 'rzp-woocommerce' ),
+				'description' => __( 'Leave this field empty to let the plugin generate the webhook secret automatically. If you configure the webhook manually in the Razorpay Dashboard, enter the same secret here and there.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
 			'configure'               => [
@@ -432,7 +432,13 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// get order meta
 		$pay_url = $order->get_meta( '_rzp_payment_url', true );
-		if ( ! empty( $pay_url ) ) {
+
+		// the stored amount (in paise) tells us whether the payable amount changed since the link was created
+		$link_amount = $order->get_meta( '_rzp_payment_link_amount', true );
+
+		$amount_paise = self::calculate_payment_link_amount( $order, $this->gateway_fee );
+
+		if ( ! empty( $pay_url ) && (int) $link_amount === $amount_paise ) {
 			// add details to log
 			$this->log( 'Payment Link already exists: ' . esc_url( $pay_url ) );
 			// Redirect to the the payment page
@@ -440,9 +446,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'result'   => 'success',
 				'redirect' => apply_filters( 'rzpwc_payment_init_redirect', esc_url( $pay_url ), $order ),
 			];
+		} elseif ( ! empty( $pay_url ) ) {
+			// the stored link no longer matches the payable amount - cancel it before creating a fresh one
+			self::maybe_invalidate_payment_link( $order->get_id(), $order );
 		}
-
-		$amount_paise = self::calculate_payment_link_amount( $order, $this->gateway_fee );
 
 		/**
 		 * Array with parameters for API interaction
@@ -526,6 +533,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				// update post metas
 				$order->update_meta_data( '_rzp_invoice_id', esc_attr( $body['id'] ) );
 				$order->update_meta_data( '_rzp_payment_url', esc_url( $body['short_url'] ) );
+				$order->update_meta_data( '_rzp_payment_link_amount', $amount_paise );
 
 				// add some order notes
 				$order->add_order_note( __( 'Payment is Pending against this order. URL: ', 'rzp-woocommerce' ) . esc_url( $body['short_url'] ), false );
@@ -937,53 +945,50 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		$gateway = new self();
 
-		// get the stored link from Razorpay to compare its amount with the current order amount
-		$link_amount   = null;
-		$link_response = $gateway->api_data( $gateway->api_mode . 's/' . $inv_id, null, 'GET' );
+		// the stored amount (in paise) tells us whether the payable amount changed since the link was created - no API call is needed.
+		// links created before the amount was recorded are treated as stale and regenerated.
+		$link_amount = $order->get_meta( '_rzp_payment_link_amount', true );
 
-		if ( ! is_wp_error( $link_response ) ) {
-			$link_body = json_decode( wp_remote_retrieve_body( $link_response ), true );
-
-			if ( isset( $link_body['amount'] ) ) {
-				$link_amount = (int) $link_body['amount'];
-			}
-		}
-
-		if ( null === $link_amount ) {
-			// the link amount cannot be verified - remove it instead of assuming it still matches
-			self::log( 'Could not fetch the payment link; removing it from the order.', 'error' );
-		} elseif ( $link_amount === self::calculate_payment_link_amount( $order, $gateway->gateway_fee ) ) {
+		if ( (int) $link_amount === self::calculate_payment_link_amount( $order, $gateway->gateway_fee ) ) {
 			return;
 		}
 
-		// the link being already cancelled on Razorpay is the outcome we want - no need to call the API again
-		$cancelled = isset( $link_body['status'] ) && 'cancelled' === $link_body['status'];
+		$cancelled = false;
 
-		if ( ! $cancelled ) {
-			// cancel the old link - retry up to 3 times on transport errors; the local metas are removed regardless of the result
-			$cancel_response = null;
+		// cancel the old link - retry up to 3 times on transport errors; the local metas are removed regardless of the result
+		$cancel_response = null;
 
-			for ( $attempt = 1; $attempt <= 3; $attempt++ ) {
-				$cancel_response = $gateway->api_data( $gateway->api_mode . 's/' . $inv_id . '/cancel' );
+		for ( $attempt = 1; $attempt <= 3; $attempt++ ) {
+			$cancel_response = $gateway->api_data( $gateway->api_mode . 's/' . $inv_id . '/cancel' );
 
-				if ( ! is_wp_error( $cancel_response ) ) {
-					break;
-				}
-
-				sleep( 1 );
+			if ( ! is_wp_error( $cancel_response ) ) {
+				break;
 			}
 
-			$cancel_body = is_wp_error( $cancel_response ) ? null : json_decode( wp_remote_retrieve_body( $cancel_response ), true );
-			$cancelled   = isset( $cancel_body['status'] ) && 'cancelled' === $cancel_body['status'];
+			sleep( 1 );
+		}
 
-			// Razorpay reports that the link was already cancelled earlier - that is the outcome we want
-			if ( ! $cancelled && isset( $cancel_body['error']['description'] ) && false !== stripos( $cancel_body['error']['description'], 'already' ) && false !== stripos( $cancel_body['error']['description'], 'cancel' ) ) {
+		$cancel_body = is_wp_error( $cancel_response ) ? null : json_decode( wp_remote_retrieve_body( $cancel_response ), true );
+		$cancelled   = isset( $cancel_body['status'] ) && 'cancelled' === $cancel_body['status'];
+
+		// Razorpay reports "cannot cancel or expire a cancelled link" (or an expired link) - that is the outcome we want.
+		// Generic failures ("Cannot be cancelled due to unknown reason", "... already paid link") must not match.
+		$cancel_description = isset( $cancel_body['error']['description'] ) ? $cancel_body['error']['description'] : '';
+
+		foreach ( [ 'cancelled link', 'canceled link', 'expired link', 'already cancelled', 'already canceled', 'already expired' ] as $unusable_phrase ) {
+			if ( ! $cancelled && false !== stripos( $cancel_description, $unusable_phrase ) ) {
 				$cancelled = true;
 			}
 		}
 
+		// the URL is always removed so a fresh link is generated on the next payment attempt;
+		// the link id is kept when the cancellation failed so payments through the old link are held for review
 		$order->delete_meta_data( '_rzp_payment_url' );
-		$order->delete_meta_data( '_rzp_invoice_id' );
+		$order->delete_meta_data( '_rzp_payment_link_amount' );
+
+		if ( $cancelled ) {
+			$order->delete_meta_data( '_rzp_invoice_id' );
+		}
 		$order->save();
 
 		$order->add_order_note( __( 'Old payment link was removed because it no longer matched the order amount (or could not be verified). A new link will be generated on the next payment attempt.', 'rzp-woocommerce' ), false );
@@ -1144,6 +1149,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$webhook_events  = [
 			'payment.authorized' => true,
 			'refund.created'     => true,
+			'payment_link.paid'  => true,
 		];
 
 		if ( 'no' === $this->webhook_enabled ) {
@@ -1162,13 +1168,12 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			return;
 		}
 
-		if ( empty( $webhook_secret ) === true ) {
-			?>
-			<div class="notice error is-dismissible">
-				<p><b><?php esc_html_e( 'Please enter the webhook secret.', 'rzp-woocommerce' ); ?></b></p>
-			</div>
-			<?php
-			return;
+		if ( empty( $webhook_secret ) ) {
+			// generate a secret automatically - it only needs to be known by this site and Razorpay
+			$webhook_secret = wp_generate_password( 32, true );
+
+			$this->update_option( 'webhook_secret', $webhook_secret );
+			$this->webhook_secret = $webhook_secret;
 		}
 
 		if ( $webhook_enabled === 'no' ) {
@@ -1277,13 +1282,19 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		if ( ! empty( $this->access_token ) && ! is_wp_error( $response ) && 401 === (int) wp_remote_retrieve_response_code( $response ) ) {
 			$mode           = 'yes' === $this->get_option( 'testmode' ) ? 'test' : 'live';
 			$setting_prefix = 'test' === $mode ? 'test_' : '';
+			$old_token      = (string) $this->get_option( $setting_prefix . 'access_token' );
 
 			$this->refresh_access_token( $mode );
 			$this->init_settings();
 
-			$request_args['headers']['Authorization'] = 'Bearer ' . $this->get_option( $setting_prefix . 'access_token' );
+			$new_token = (string) $this->get_option( $setting_prefix . 'access_token' );
 
-			$response = wp_remote_request( $api_endpoint, $request_args );
+			// retry only when a fresh token was actually obtained
+			if ( '' !== $new_token && $new_token !== $old_token ) {
+				$request_args['headers']['Authorization'] = 'Bearer ' . $new_token;
+
+				$response = wp_remote_request( $api_endpoint, $request_args );
+			}
 		}
 
 		return $response;

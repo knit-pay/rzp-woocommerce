@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 2.4.0
+Release Date: Oct 28, 2026
+
+* Fix: Stale payment links are now invalidated when an unpaid order's amount changes, and the payment link amount is verified when a payment is received - payments made through an outdated link are not processed automatically and are left for manual review.
+* Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.
+* Improvement: The Razorpay webhook is now also subscribed to the "payment_link.paid" event, to support payment verification improvements in upcoming releases.
+* Improvement: The webhook secret is generated automatically when the secret field is left empty.
+
 ## 2.3.1
 Release Date: Oct 23, 2026
 

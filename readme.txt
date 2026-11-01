@@ -3,7 +3,7 @@ Contributors: knitpay, gautammkgarg, infosatech
 Tags: razorpay, qrcode, upi, payments, emi
 Requires at least: 5.0
 Tested up to: 7.2
-Stable tag: 2.3.1
+Stable tag: 2.4.0
 Requires PHP: 7.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -81,7 +81,9 @@ Go to 'WooCommerce > Settings > Payments > Affordability Widget', enable the "Af
 
 = How to use webhook? What webhooks are supported? =
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from plugin settings page and create and copy webhook secret key and paste it to plugin settings and save changes. By Default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development. 
+When you enable the webhook in the plugin settings, the plugin generates the webhook secret automatically (if the secret field is left empty) and attempts to register the webhook when the settings are saved. It subscribes to "payment.authorized", "refund.created" and "payment_link.paid" events.
+
+If the webhook does not appear in Razorpay 'Dashboard > Settings > Webhooks' - for example, because the automatic registration failed due to API permissions, a localhost or unreachable site URL, or a missing secret key - create it manually: enter the webhook URL shown on the plugin settings page, use the same secret in both places (you may enter any value in the plugin's webhook secret field), and select the three events mentioned above. If you want any other webhook supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development.
 
 = How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure? =
 
@@ -138,6 +140,14 @@ New: Razorpay Affordability Widget on product pages and a redesigned connection 
 == Changelog ==
 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
+
+= 2.4.0 =
+Release Date: Oct 28, 2026
+
+* Fix: Stale payment links are now invalidated when an unpaid order's amount changes, and the payment link amount is verified when a payment is received - payments made through an outdated link are not processed automatically and are left for manual review.
+* Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.
+* Improvement: The Razorpay webhook is now also subscribed to the "payment_link.paid" event, to support payment verification improvements in upcoming releases.
+* Improvement: The webhook secret is generated automatically when the secret field is left empty.
 
 = 2.3.1 =
 Release Date: Oct 23, 2026

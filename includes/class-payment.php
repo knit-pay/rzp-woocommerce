@@ -84,7 +84,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$this->description        = $this->get_option( 'description' );
 		$this->thank_you          = $this->get_option( 'thank_you' );
 		$this->api_type           = $this->get_saved_api_type();
-		$this->test_mode          = 'yes' === $this->get_option( 'testmode' );
+		$this->test_mode          = 'yes' === $this->get_option( 'testmode', 'yes' );
 		$setting_prefix           = $this->test_mode ? 'test_' : '';
 		$this->key_id             = $this->get_option( $setting_prefix . 'key_id' );
 		$this->key_secret         = $this->get_option( $setting_prefix . 'key_secret' );
@@ -197,6 +197,11 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 */
 	public function process_admin_options() {
 		$saved = parent::process_admin_options();
+
+		if ( array_key_exists( 'testmode', $_POST ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by the WooCommerce settings page before this handler runs.
+			$test_mode = \sanitize_text_field( \wp_unslash( $_POST['testmode'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified by the WooCommerce settings page before this handler runs.
+			$saved     = $this->update_option( 'testmode', 'yes' === $test_mode ? 'yes' : 'no' ) || $saved;
+		}
 
 		// Take action if Connect/Disconnect button is clicked..
 		$rzp_woocommerce_connect_action = array_key_exists( 'rzp-woocommerce-connect-action', $_POST ) ? \sanitize_text_field( \wp_unslash( $_POST['rzp-woocommerce-connect-action'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified immediately below before the action is acted upon.
@@ -344,14 +349,6 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 					'legacy'   => __( 'Legacy API', 'rzp-woocommerce' ),
 				],
 			],
-			'testmode'                => [
-				'title'       => __( 'Test Mode:', 'rzp-woocommerce' ),
-				'label'       => __( 'Enable Test Mode', 'rzp-woocommerce' ),
-				'type'        => 'checkbox',
-				'description' => __( 'Run the Razorpay Payment Gateway in test mode.', 'rzp-woocommerce' ),
-				'default'     => 'yes',
-				'desc_tip'    => false,
-			],
 			'webhook_details'         => [
 				'title'       => __( 'Razorpay Webhook', 'rzp-woocommerce' ),
 				'type'        => 'title',
@@ -436,7 +433,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		];
 
 		if ( 'legacy' !== $this->get_saved_api_type() ) {
-			unset( $this->form_fields['api_type'] );
+			unset( $this->form_fields['api_type'], $this->form_fields['api_details'] );
 		}
 	}
 		
@@ -1299,7 +1296,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		} else {
 			// Refresh Access Token if already expired.
 			if ( time() >= $this->expires_at ) {
-				$mode           = 'yes' === $this->get_option( 'testmode' ) ? 'test' : 'live';
+				$mode           = 'yes' === $this->get_option( 'testmode', 'yes' ) ? 'test' : 'live';
 				$setting_prefix = 'test' === $mode ? 'test_' : '';
 
 				$this->refresh_access_token( $mode );
@@ -1333,7 +1330,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 		// Retry once with a refreshed access token when Razorpay rejects it.
 		if ( ! empty( $this->access_token ) && ! is_wp_error( $response ) && 401 === (int) wp_remote_retrieve_response_code( $response ) ) {
-			$mode           = 'yes' === $this->get_option( 'testmode' ) ? 'test' : 'live';
+			$mode           = 'yes' === $this->get_option( 'testmode', 'yes' ) ? 'test' : 'live';
 			$setting_prefix = 'test' === $mode ? 'test_' : '';
 			$old_token      = (string) $this->get_option( $setting_prefix . 'access_token' );
 
@@ -1520,6 +1517,14 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		set_transient( 'rzp_woocommerce_refreshing_access_token_' . $mode, true, MINUTE_IN_SECONDS );
 
 		self::save_token( $result, $mode, true );
+
+		$settings       = get_option( 'woocommerce_wc-razorpay_settings', [] );
+		$setting_prefix = 'test' === $mode ? 'test_' : '';
+
+		if ( is_array( $settings ) && ! empty( $settings[ $setting_prefix . 'access_token' ] ) ) {
+			$settings['testmode'] = 'test' === $mode ? 'yes' : 'no';
+			update_option( 'woocommerce_wc-razorpay_settings', $settings );
+		}
 
 		self::redirect_to_config();
 	}
@@ -1732,6 +1737,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$states['test']['expired'] = $states['test']['token'] && 0 < $states['test']['expires_at'] && time() >= $states['test']['expires_at'];
 
 		$all_connected = ! empty( $states['live']['connected'] ) && ! empty( $states['test']['connected'] );
+		$any_connected = ! empty( $states['live']['connected'] ) || ! empty( $states['test']['connected'] );
 
 		ob_start();
 		?>
@@ -1739,6 +1745,26 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			<?php if ( ! $all_connected ) : ?>
 				<p class="rzpwc-connection-note"><?php esc_html_e( 'Connect your Razorpay account below. You will be redirected to Razorpay to authorize the connection and return here automatically.', 'rzp-woocommerce' ); ?></p>
 			<?php endif; ?>
+
+			<fieldset class="rzpwc-active-mode">
+				<legend class="rzpwc-active-mode-label"><?php esc_html_e( 'Active mode', 'rzp-woocommerce' ); ?></legend>
+				<div class="rzpwc-mode-switch">
+					<label class="rzpwc-mode-segment">
+						<input type="radio" name="testmode" value="no" <?php checked( $active_mode, 'live' ); ?>>
+						<span><?php esc_html_e( 'Live', 'rzp-woocommerce' ); ?></span>
+					</label>
+					<label class="rzpwc-mode-segment">
+						<input type="radio" name="testmode" value="yes" <?php checked( $active_mode, 'test' ); ?>>
+						<span><?php esc_html_e( 'Test', 'rzp-woocommerce' ); ?></span>
+					</label>
+				</div>
+				<p class="rzpwc-active-mode-help"><?php esc_html_e( 'The gateway uses the selected Razorpay account. Save changes to apply.', 'rzp-woocommerce' ); ?></p>
+			</fieldset>
+
+			<?php if ( $any_connected && ! $states[ $active_mode ]['connected'] ) : ?>
+				<p class="rzpwc-connection-warning"><?php esc_html_e( 'The active mode is not connected. Connect it below or switch to a connected mode.', 'rzp-woocommerce' ); ?></p>
+			<?php endif; ?>
+
 			<div class="rzpwc-connection-modes">
 			<?php
 			foreach ( $modes as $mode => $meta ) :
@@ -1748,12 +1774,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				$expires_at = $state['expires_at'];
 				$expired    = $state['expired'];
 				?>
-				<div class="rzpwc-mode rzpwc-mode-<?php echo esc_attr( $mode ); ?> <?php echo esc_attr( $active_mode === $mode ? 'rzpwc-mode-in-use' : '' ); ?>">
+				<div class="rzpwc-mode rzpwc-mode-<?php echo esc_attr( $mode ); ?>">
 					<div class="rzpwc-mode-head">
 						<span class="rzpwc-mode-name"><?php echo esc_html( $meta['label'] ); ?></span>
-						<?php if ( $active_mode === $mode ) : ?>
-							<span class="rzpwc-in-use-badge"><?php echo esc_html( __( 'Currently in use', 'rzp-woocommerce' ) ); ?></span>
-						<?php endif; ?>
 					</div>
 					<p class="rzpwc-mode-desc"><?php echo esc_html( $meta['description'] ); ?></p>
 

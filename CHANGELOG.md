@@ -9,6 +9,7 @@ Release Date: Nov 2, 2026
 * Improvement: The Razorpay webhook is now also subscribed to the "payment_link.paid" event, to support payment verification improvements in upcoming releases.
 * Improvement: The webhook secret is generated automatically when the secret field is left empty.
 * Improvement: The Legacy API option is now shown only to existing installations that already use it; new installations use the Standard API.
+* Improvement: The Live/Test mode is now a clear switch in the Razorpay connection panel, and connecting a mode activates it.
 
 ## 2.3.1
 Release Date: Oct 23, 2026

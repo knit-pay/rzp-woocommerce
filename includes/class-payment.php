@@ -1163,22 +1163,6 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			'payment_link.paid'  => true,
 		];
 
-		$webhook    = $this->webhook_data( 'GET', 'webhooks/' );
-		$webhook_id = '';
-
-		if ( is_array( $webhook ) && ! empty( $webhook['items'] ) ) {
-			foreach ( $webhook['items'] as $value ) {
-				if ( isset( $value['url'], $value['id'] ) && $value['url'] === $webhook_url ) {
-					$webhook_id = $value['id'];
-				}
-			}
-		}
-
-		// nothing to deactivate when the option is disabled and no webhook exists
-		if ( ! $is_webhook_enabled && empty( $webhook_id ) ) {
-			return;
-		}
-
 		$new_secret = '';
 		if ( $is_webhook_enabled ) {
 			$domain    = wp_parse_url( $webhook_url );
@@ -1198,24 +1182,44 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				$new_secret     = wp_generate_password( 32, true );
 				$webhook_secret = $new_secret;
 			}
+		} elseif ( empty( $webhook_secret ) ) {
+			// the plugin stores a secret when it registers a webhook - nothing to deactivate otherwise
+			return;
+		}
+
+		$webhook    = $this->webhook_data( 'GET', 'webhooks/' );
+		$webhook_id = '';
+
+		if ( is_array( $webhook ) && ! empty( $webhook['items'] ) ) {
+			foreach ( $webhook['items'] as $value ) {
+				if ( isset( $value['url'], $value['id'] ) && $value['url'] === $webhook_url ) {
+					$webhook_id = $value['id'];
+				}
+			}
+		}
+
+		// nothing to deactivate when the option is disabled and no webhook exists
+		if ( ! $is_webhook_enabled && empty( $webhook_id ) ) {
+			return;
 		}
 
 		$data = [
 			'url'    => $webhook_url,
 			'active' => $is_webhook_enabled,
 			'events' => $webhook_events,
+			'secret' => $webhook_secret,
 		];
-
-		if ( ! empty( $webhook_secret ) ) {
-			$data['secret'] = $webhook_secret;
-		}
 
 		$result = $webhook_id
 			? $this->webhook_data( 'PUT', 'webhooks/' . $webhook_id, wp_json_encode( $data ) )
 			: $this->webhook_data( 'POST', 'webhooks/', wp_json_encode( $data ) );
 
-		// the existing webhook is now deactivated - nothing else to do
+		// log HTTP-level deactivation failures; transport errors are already logged by webhook_data()
 		if ( ! $is_webhook_enabled ) {
+			if ( false !== $result && ( ! is_array( $result ) || empty( $result['id'] ) ) ) {
+				$this->log( 'Webhook deactivation failed: ' . wc_print_r( $result, true ), 'error' );
+			}
+
 			return;
 		}
 

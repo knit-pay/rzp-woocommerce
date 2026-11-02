@@ -955,15 +955,18 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 			return;
 		}
 
-		$gateway = new self();
-
 		// the stored amount (in paise) tells us whether the payable amount changed since the link was created - no API call is needed.
 		// links created before the amount was recorded are treated as stale and regenerated.
 		$link_amount = $order->get_meta( '_rzp_payment_link_amount', true );
 
-		if ( (int) $link_amount === self::calculate_payment_link_amount( $order, $gateway->gateway_fee ) ) {
+		$settings    = get_option( 'woocommerce_wc-razorpay_settings', [] );
+		$gateway_fee = isset( $settings['gateway_fee'] ) ? $settings['gateway_fee'] : 'no';
+
+		if ( (int) $link_amount === self::calculate_payment_link_amount( $order, $gateway_fee ) ) {
 			return;
 		}
+
+		$gateway = new self();
 
 		$cancelled = false;
 

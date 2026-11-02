@@ -894,22 +894,34 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	private function is_payment_link_amount_valid( $order, $payment_id ) {
-		$stored_link_id = (string) $order->get_meta( '_rzp_invoice_id', true );
+		$expected_amount = self::calculate_payment_link_amount( $order, $this->gateway_fee );
+		$stored_amount   = $order->get_meta( '_rzp_payment_link_amount', true );
+		$link_amount     = null;
 
-		if ( empty( $stored_link_id ) ) {
+		if ( '' !== (string) $stored_amount ) {
+			// the amount recorded when the link was created - no API call is needed
+			$link_amount = (int) $stored_amount;
+		} else {
+			// legacy link without a recorded amount - fetch it from Razorpay once
+			$stored_link_id = (string) $order->get_meta( '_rzp_invoice_id', true );
+
+			if ( empty( $stored_link_id ) ) {
+				return true;
+			}
+
+			$link_response = $this->api_data( $this->api_mode . 's/' . $stored_link_id, null, 'GET' );
+			$link_body     = is_wp_error( $link_response ) ? null : json_decode( wp_remote_retrieve_body( $link_response ), true );
+
+			$this->log( 'Razorpay response on fetching the Payment Link: ' . wc_print_r( $link_body, true ) );
+
+			$link_amount = isset( $link_body['amount'] ) ? (int) $link_body['amount'] : null;
+		}
+
+		if ( null !== $link_amount && $link_amount === $expected_amount ) {
 			return true;
 		}
 
-		$link_response = $this->api_data( $this->api_mode . 's/' . $stored_link_id, null, 'GET' );
-		$link_body     = is_wp_error( $link_response ) ? null : json_decode( wp_remote_retrieve_body( $link_response ), true );
-
-		$this->log( 'Razorpay response on fetching the Payment Link: ' . wc_print_r( $link_body, true ) );
-
-		if ( isset( $link_body['amount'] ) && (int) $link_body['amount'] === self::calculate_payment_link_amount( $order, $this->gateway_fee ) ) {
-			return true;
-		}
-
-		$this->log( 'Payment amount mismatch! Link amount: ' . ( isset( $link_body['amount'] ) ? $link_body['amount'] : 'unknown' ) . ' | Expected: ' . self::calculate_payment_link_amount( $order, $this->gateway_fee ) );
+		$this->log( 'Payment amount mismatch! Link amount: ' . ( null !== $link_amount ? $link_amount : 'unknown' ) . ' | Expected: ' . $expected_amount );
 
 		/* translators: 1: Payment ID. */
 		$order->add_order_note( sprintf( __( 'Payment (Transaction ID: %1$s) was received against a payment link whose amount does not match the current order amount and was not processed automatically. Please review this order manually.', 'rzp-woocommerce' ), esc_html( $payment_id ) ), false );
@@ -1142,68 +1154,83 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	}
 	
 	public function auto_enable_webhook() {
-		$webhook_exist   = false;
-		$webhook_url     = esc_url( get_home_url( null, '/wc-api/rzp-webhook/' ) );
-		$webhook_enabled = $this->get_option( 'webhook_enabled' );
-		$webhook_secret  = $this->get_option( 'webhook_secret' );
-		$webhook_events  = [
+		$webhook_url        = esc_url( get_home_url( null, '/wc-api/rzp-webhook/' ) );
+		$is_webhook_enabled = 'no' !== $this->get_option( 'webhook_enabled' );
+		$webhook_secret     = $this->get_option( 'webhook_secret' );
+		$webhook_events     = [
 			'payment.authorized' => true,
 			'refund.created'     => true,
 			'payment_link.paid'  => true,
 		];
 
-		if ( 'no' === $this->webhook_enabled ) {
-			return;
-		}
+		$webhook    = $this->webhook_data( 'GET', 'webhooks/' );
+		$webhook_id = '';
 
-		$domain    = wp_parse_url( $webhook_url );
-		$domain_ip = gethostbyname( $domain['host'] );
-		if ( ! filter_var( $domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-			$this->update_option( 'webhook_enabled', 'no' );
-			?>
-			<div class="notice error is-dismissible">
-				<p><b><?php esc_html_e( 'Could not enable webhook for localhost.', 'rzp-woocommerce' ); ?></b></p>
-			</div>
-			<?php
-			return;
-		}
-
-		if ( empty( $webhook_secret ) ) {
-			// generate a secret automatically - it only needs to be known by this site and Razorpay
-			$webhook_secret = wp_generate_password( 32, true );
-
-			$this->update_option( 'webhook_secret', $webhook_secret );
-			$this->webhook_secret = $webhook_secret;
-		}
-
-		if ( $webhook_enabled === 'no' ) {
-			$data = [
-				'url'    => $webhook_url,
-				'active' => false,
-			];
-		} else {
-			$data = [
-				'url'    => $webhook_url,
-				'active' => true,
-				'events' => $webhook_events,
-				'secret' => $webhook_secret,
-			];
-		}
-
-		$webhook = $this->webhook_data( 'GET', 'webhooks/' );
-		if ( $webhook ) {
-			foreach ( $webhook['items'] as $key => $value ) {
-				if ( $value['url'] === $webhook_url ) {
-					$webhook_exist = true;
-					$webhook_id    = $value['id'];
+		if ( is_array( $webhook ) && ! empty( $webhook['items'] ) ) {
+			foreach ( $webhook['items'] as $value ) {
+				if ( isset( $value['url'], $value['id'] ) && $value['url'] === $webhook_url ) {
+					$webhook_id = $value['id'];
 				}
 			}
 		}
-		
-		if ( $webhook_exist ) {
-			$this->webhook_data( 'PUT', 'webhooks/' . $webhook_id, wp_json_encode( $data ) );
+
+		// nothing to deactivate when the option is disabled and no webhook exists
+		if ( ! $is_webhook_enabled && empty( $webhook_id ) ) {
+			return;
+		}
+
+		$new_secret = '';
+		if ( $is_webhook_enabled ) {
+			$domain    = wp_parse_url( $webhook_url );
+			$domain_ip = gethostbyname( $domain['host'] );
+			if ( ! filter_var( $domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				$this->update_option( 'webhook_enabled', 'no' );
+				?>
+				<div class="notice error is-dismissible">
+					<p><b><?php esc_html_e( 'Could not enable webhook for localhost.', 'rzp-woocommerce' ); ?></b></p>
+				</div>
+				<?php
+				return;
+			}
+
+			// generate the secret automatically when it is not set - it is stored only after the webhook is registered
+			if ( empty( $webhook_secret ) ) {
+				$new_secret     = wp_generate_password( 32, true );
+				$webhook_secret = $new_secret;
+			}
+		}
+
+		$data = [
+			'url'    => $webhook_url,
+			'active' => $is_webhook_enabled,
+			'events' => $webhook_events,
+		];
+
+		if ( ! empty( $webhook_secret ) ) {
+			$data['secret'] = $webhook_secret;
+		}
+
+		$result = $webhook_id
+			? $this->webhook_data( 'PUT', 'webhooks/' . $webhook_id, wp_json_encode( $data ) )
+			: $this->webhook_data( 'POST', 'webhooks/', wp_json_encode( $data ) );
+
+		// the existing webhook is now deactivated - nothing else to do
+		if ( ! $is_webhook_enabled ) {
+			return;
+		}
+
+		if ( is_array( $result ) && ! empty( $result['id'] ) ) {
+			if ( ! empty( $new_secret ) ) {
+				$this->update_option( 'webhook_secret', $new_secret );
+				$this->webhook_secret = $new_secret;
+			}
 		} else {
-			$this->webhook_data( 'POST', 'webhooks/', wp_json_encode( $data ) );
+			$this->log( 'Webhook Action Failed: ' . wc_print_r( $result, true ), 'error' );
+			?>
+			<div class="notice error is-dismissible">
+				<p><b><?php esc_html_e( 'Could not register the Razorpay webhook automatically. Please check the connection or configure the webhook manually from the Razorpay Dashboard.', 'rzp-woocommerce' ); ?></b></p>
+			</div>
+			<?php
 		}
 	}
 

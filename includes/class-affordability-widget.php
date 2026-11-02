@@ -52,15 +52,15 @@ final class RZP_WC_Affordability_Widget {
 	 * @var array
 	 */
 	private static $default_customizations = [
-		'theme_color'      => '#8BBFFF',
-		'heading_color'    => 'black',
+		'theme_color'       => '#8BBFFF',
+		'heading_color'     => 'black',
 		'heading_font_size' => '10',
-		'content_color'    => 'grey',
+		'content_color'     => 'grey',
 		'content_font_size' => '10',
-		'link_color'       => 'blue',
-		'link_font_size'   => '10',
-		'footer_color'     => 'grey',
-		'footer_font_size' => '10',
+		'link_color'        => 'blue',
+		'link_font_size'    => '10',
+		'footer_color'      => 'grey',
+		'footer_font_size'  => '10',
 	];
 
 	/**
@@ -421,24 +421,24 @@ final class RZP_WC_Affordability_Widget {
 			'themeColor'       => self::customization( $settings, 'affordability_widget_theme_color', 'theme_color' ),
 			'additionalOffers' => $offers_enabled ? self::parse_list( self::get_setting( $settings, 'affordability_widget_additional_offers', '' ) ) : [],
 			'display'          => [
-				'offers'     => $offers_enabled ? self::offers_display_config( $settings ) : false,
-				'emi'        => self::method_display_config( $settings, 'affordability_widget_emi', 'affordability_widget_limited_emi_providers', 'issuers' ),
+				'offers'      => $offers_enabled ? self::offers_display_config( $settings ) : false,
+				'emi'         => self::method_display_config( $settings, 'affordability_widget_emi', 'affordability_widget_limited_emi_providers', 'issuers' ),
 				'cardlessEmi' => self::method_display_config( $settings, 'affordability_widget_cardless_emi', 'affordability_widget_limited_cardless_emi_providers', 'providers' ),
-				'paylater'   => self::method_display_config( $settings, 'affordability_widget_pay_later', 'affordability_widget_limited_pay_later_providers', 'providers' ),
-				'widgetMain' => [
-					'heading'     => [
+				'paylater'    => self::method_display_config( $settings, 'affordability_widget_pay_later', 'affordability_widget_limited_pay_later_providers', 'providers' ),
+				'widgetMain'  => [
+					'heading' => [
 						'color'    => self::customization( $settings, 'affordability_widget_heading_color', 'heading_color' ),
 						'fontSize' => self::font_size( $settings, 'affordability_widget_heading_font_size', 'heading_font_size' ),
 					],
-					'content'     => [
+					'content' => [
 						'color'    => self::customization( $settings, 'affordability_widget_content_color', 'content_color' ),
 						'fontSize' => self::font_size( $settings, 'affordability_widget_content_font_size', 'content_font_size' ),
 					],
-					'link'        => [
+					'link'    => [
 						'color'    => self::customization( $settings, 'affordability_widget_link_color', 'link_color' ),
 						'fontSize' => self::font_size( $settings, 'affordability_widget_link_font_size', 'link_font_size' ),
 					],
-					'footer'      => [
+					'footer'  => [
 						'color'    => self::customization( $settings, 'affordability_widget_footer_color', 'footer_color' ),
 						'fontSize' => self::font_size( $settings, 'affordability_widget_footer_font_size', 'footer_font_size' ),
 						'darkLogo' => 'yes' === self::get_setting( $settings, 'affordability_widget_dark_logo', 'yes' ),
@@ -554,13 +554,13 @@ final class RZP_WC_Affordability_Widget {
 	/**
 	 * Get a setting value.
 	 *
-	 * @param array  $settings Gateway settings.
-	 * @param string $key      Setting key.
-	 * @param mixed  $default  Default value.
+	 * @param array  $settings      Gateway settings.
+	 * @param string $key           Setting key.
+	 * @param mixed  $default_value Default value.
 	 * @return mixed
 	 */
-	private static function get_setting( $settings, $key, $default = 'no' ) {
-		return isset( $settings[ $key ] ) ? $settings[ $key ] : $default;
+	private static function get_setting( $settings, $key, $default_value = 'no' ) {
+		return isset( $settings[ $key ] ) ? $settings[ $key ] : $default_value;
 	}
 
 	/**
@@ -714,7 +714,7 @@ JS;
 		$fields = [];
 
 		// Guide merchants without any connection to the payment gateway settings.
-		$connection = get_option( self::SETTINGS_OPTION, [] );
+		$connection         = get_option( self::SETTINGS_OPTION, [] );
 		$connected_anywhere = ! empty( $connection['access_token'] ) || ! empty( $connection['test_access_token'] )
 			|| ( ! empty( $connection['key_id'] ) && ! empty( $connection['key_secret'] ) )
 			|| ( ! empty( $connection['test_key_id'] ) && ! empty( $connection['test_key_secret'] ) );
@@ -765,12 +765,12 @@ JS;
 	 */
 	public static function settings_fields() {
 		return [
-			'affordability_widget_section' => [
+			'affordability_widget_section'               => [
 				'title'       => __( 'Affordability Widget', 'rzp-woocommerce' ),
 				'type'        => 'title',
 				'description' => __( 'Display the Razorpay Affordability Widget on product pages to inform your customers about EMI, Cardless EMI, Pay Later and offer based payment options before they reach checkout. The widget appears only if the Affordability feature is enabled on your Razorpay account, which is verified automatically whenever the settings are saved.', 'rzp-woocommerce' ),
 			],
-			'affordability_widget'         => [
+			'affordability_widget'                       => [
 				'title'       => __( 'Affordability Widget:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -778,7 +778,7 @@ JS;
 				'default'     => 'no',
 				'desc_tip'    => false,
 			],
-			'affordability_widget_preview_only' => [
+			'affordability_widget_preview_only'          => [
 				'title'       => __( 'Widget Preview Mode:', 'rzp-woocommerce' ),
 				'label'       => __( 'Show widget only to administrators', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -786,7 +786,7 @@ JS;
 				'default'     => 'no',
 				'desc_tip'    => false,
 			],
-			'affordability_widget_offers'  => [
+			'affordability_widget_offers'                => [
 				'title'       => __( 'Offers:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -794,19 +794,19 @@ JS;
 				'default'     => 'yes',
 				'desc_tip'    => false,
 			],
-			'affordability_widget_additional_offers' => [
+			'affordability_widget_additional_offers'     => [
 				'title'       => __( 'Additional Offers:', 'rzp-woocommerce' ),
 				'type'        => 'textarea',
 				'description' => __( 'Enter Offer IDs separated by comma, for offers that did not have the "Show Offer on Checkout" option enabled at the time of creation.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_limited_offers' => [
+			'affordability_widget_limited_offers'        => [
 				'title'       => __( 'Limited Offers:', 'rzp-woocommerce' ),
 				'type'        => 'textarea',
 				'description' => __( 'In case you want to display limited offers on the widget, enter the Offer IDs separated by comma that you want to display.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_show_discount' => [
+			'affordability_widget_show_discount'         => [
 				'title'       => __( 'Show Discount Amount:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -814,7 +814,7 @@ JS;
 				'default'     => 'yes',
 				'desc_tip'    => false,
 			],
-			'affordability_widget_emi'     => [
+			'affordability_widget_emi'                   => [
 				'title'       => __( 'Card EMI:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -829,7 +829,7 @@ JS;
 				'description' => sprintf( __( 'In case you want to display limited Card EMI options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-gateway/affordability/faqs/#2-what-are-the-standard-credit-card-interest">', '</a>' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_cardless_emi' => [
+			'affordability_widget_cardless_emi'          => [
 				'title'       => __( 'Cardless EMI:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -844,7 +844,7 @@ JS;
 				'description' => sprintf( __( 'In case you want to display limited Cardless EMI options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-methods/emi/cardless-emi/">', '</a>' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_pay_later' => [
+			'affordability_widget_pay_later'             => [
 				'title'       => __( 'Pay Later:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',
@@ -859,61 +859,61 @@ JS;
 				'description' => sprintf( __( 'In case you want to display limited Pay Later options on the widget, enter the list of provider codes separated by comma. Please find the list of %1$sprovider codes%2$s here.', 'rzp-woocommerce' ), '<a target="_blank" href="https://razorpay.com/docs/payments/payment-methods/pay-later/">', '</a>' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_theme_color' => [
+			'affordability_widget_theme_color'           => [
 				'title'       => __( 'Theme Color:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the 6 character hex code of the theme color. Default is blue.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_heading_color' => [
+			'affordability_widget_heading_color'         => [
 				'title'       => __( 'Heading Color:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the heading color based on your requirement. Default is black.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_heading_font_size' => [
+			'affordability_widget_heading_font_size'     => [
 				'title'       => __( 'Heading Font Size:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the font size of the heading in px. Default is 10px.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_content_color' => [
+			'affordability_widget_content_color'         => [
 				'title'       => __( 'Content Color:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the content color based on your requirement. Default is grey.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_content_font_size' => [
+			'affordability_widget_content_font_size'     => [
 				'title'       => __( 'Content Font Size:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the font size of the content in px. Default is 10px.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_link_color' => [
+			'affordability_widget_link_color'            => [
 				'title'       => __( 'Link Color:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the link color based on your requirement. Default is blue.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_link_font_size' => [
+			'affordability_widget_link_font_size'        => [
 				'title'       => __( 'Link Font Size:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the font size of the link in px. Default is 10px.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_footer_color' => [
+			'affordability_widget_footer_color'          => [
 				'title'       => __( 'Footer Color:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the footer color based on your requirement. Default is grey.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_footer_font_size' => [
+			'affordability_widget_footer_font_size'      => [
 				'title'       => __( 'Footer Font Size:', 'rzp-woocommerce' ),
 				'type'        => 'text',
 				'description' => __( 'Enter the font size of the footer in px. Default is 10px.', 'rzp-woocommerce' ),
 				'desc_tip'    => false,
 			],
-			'affordability_widget_dark_logo' => [
+			'affordability_widget_dark_logo'             => [
 				'title'       => __( 'Dark Logo:', 'rzp-woocommerce' ),
 				'label'       => __( 'Enable/Disable', 'rzp-woocommerce' ),
 				'type'        => 'checkbox',

@@ -23,7 +23,7 @@ It uses a Razorpay's Payment Link API integration, allowing the customer to pay 
 * Apple Pay for international payments.
 * Razorpay Affordability Widget on product pages (EMI, Cardless EMI, Pay Later & Offers).
 * Ability to send Payment Links via SMS and Email notification to customers.
-* Automatic Webhook configuration with payment.authorized and refund.created events.
+* Automatic Webhook configuration with payment.authorized, refund.created and payment_link.paid events.
 * One time Payment for your website.
 * Customized "Order Received" message.
 * Mode of transaction Live and Test Mode.
@@ -85,7 +85,9 @@ Go to 'WooCommerce > Settings > Payments > Affordability Widget', enable the "Af
 
 #### How to use webhook? What webhooks are supported?
 
-Go to Razorpay 'Dashboard > Settings > Webhooks'. Enter the URL from the plugin settings page and paste the webhook secret key into the plugin settings and save changes. By default this plugin supports only these two Webhooks: "payment.authorized" and "refund.created". If you want more webhooks supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development.
+When you enable the webhook in the plugin settings, the plugin generates the webhook secret automatically (if the secret field is left empty) and attempts to register the webhook when the settings are saved. It subscribes to "payment.authorized", "refund.created" and "payment_link.paid" events.
+
+If the webhook does not appear in Razorpay 'Dashboard > Settings > Webhooks' - for example, because the automatic registration failed due to API permissions, a localhost or unreachable site URL, or a missing secret key - create it manually: enter the webhook URL shown on the plugin settings page, use the same secret in both places (you may enter any value in the plugin's webhook secret field), and select the three events mentioned above. If you want any other webhook supported, please feel free to contact us at https://www.knitpay.org/contact-us/ as it needs custom development.
 
 #### How to send automatic payment reminder to customer, if customer does not make payment after initiating the payment procedure?
 

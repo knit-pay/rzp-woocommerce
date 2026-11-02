@@ -53,9 +53,9 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	protected $ref;
 	protected $status;
 
-	const KNIT_PAY_OAUTH_SERVER_URL             = 'https://oauth-server.knitpay.org/api/';
-	const GATEWAY_ID                            = 'rzp-woocommerce';
-	const RENEWAL_TIME_BEFORE_TOKEN_EXPIRE      = 15 * MINUTE_IN_SECONDS; // 15 minutes.
+	const KNIT_PAY_OAUTH_SERVER_URL        = 'https://oauth-server.knitpay.org/api/';
+	const GATEWAY_ID                       = 'rzp-woocommerce';
+	const RENEWAL_TIME_BEFORE_TOKEN_EXPIRE = 15 * MINUTE_IN_SECONDS; // 15 minutes.
 
 	/**
 	 * Class constructor
@@ -1276,7 +1276,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$api_endpoint = 'https://api.razorpay.com/v1/' . $url;
 
 		if ( empty( $this->access_token ) ) {
-			$auth = 'Basic ' . base64_encode( $this->key_id . ':' . $this->key_secret );
+			$auth = 'Basic ' . base64_encode( $this->key_id . ':' . $this->key_secret ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- HTTP Basic auth header required by the Razorpay API.
 		} else {
 			// Refresh Access Token if already expired.
 			if ( time() >= $this->expires_at ) {
@@ -1325,8 +1325,8 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 			// retry only when a fresh token was actually obtained
 			if ( '' !== $new_token && $new_token !== $old_token ) {
-				$this->access_token = $new_token;
-				$this->expires_at   = (int) $this->get_option( $setting_prefix . 'expires_at' );
+				$this->access_token                       = $new_token;
+				$this->expires_at                         = (int) $this->get_option( $setting_prefix . 'expires_at' );
 				$request_args['headers']['Authorization'] = 'Bearer ' . $new_token;
 
 				$response = wp_remote_request( $api_endpoint, $request_args );
@@ -1676,7 +1676,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 	}
 
 	public function generate_razorpay_connect_button_html( $k, $v ) {
-		$testmode = 'yes' === $this->get_option( 'testmode', 'yes' );
+		$testmode    = 'yes' === $this->get_option( 'testmode', 'yes' );
 		$active_mode = $testmode ? 'test' : 'live';
 
 		$modes = [

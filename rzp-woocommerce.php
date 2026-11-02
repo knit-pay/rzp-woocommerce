@@ -236,7 +236,7 @@ final class RZPWC {
 		add_action(
 			'admin_enqueue_scripts',
 			function ( $hook ) {
-				if ( 'woocommerce_page_wc-settings' != $hook ) {
+				if ( 'woocommerce_page_wc-settings' !== $hook ) {
 					return;
 				}
 
@@ -402,9 +402,9 @@ final class RZPWC {
 		}
 
 		// Show Deprecate Settings Notice with rising frequency, completing the migration in 25 weeks.
-		$rzpwc_settings = get_option( 'woocommerce_wc-razorpay_settings', [] );
-		$legacy_live_connection   = ! empty( $rzpwc_settings['key_secret'] ) && empty( $rzpwc_settings['access_token'] );
-		$legacy_test_connection   = ! empty( $rzpwc_settings['test_key_secret'] ) && empty( $rzpwc_settings['test_access_token'] );
+		$rzpwc_settings         = get_option( 'woocommerce_wc-razorpay_settings', [] );
+		$legacy_live_connection = ! empty( $rzpwc_settings['key_secret'] ) && empty( $rzpwc_settings['access_token'] );
+		$legacy_test_connection = ! empty( $rzpwc_settings['test_key_secret'] ) && empty( $rzpwc_settings['test_access_token'] );
 		if ( $legacy_live_connection || $legacy_test_connection ) {
 			$deprecate_setting_notice_random_priority = get_transient( 'rzpwc_plugin_deprecate_setting_notice_random_priority' );
 			if ( empty( $deprecate_setting_notice_random_priority ) ) {

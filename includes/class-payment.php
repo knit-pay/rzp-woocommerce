@@ -83,7 +83,7 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		$this->title              = $this->get_option( 'title' );
 		$this->description        = $this->get_option( 'description' );
 		$this->thank_you          = $this->get_option( 'thank_you' );
-		$this->api_type           = $this->get_option( 'api_type', 'legacy' );
+		$this->api_type           = $this->get_saved_api_type();
 		$this->test_mode          = 'yes' === $this->get_option( 'testmode' );
 		$setting_prefix           = $this->test_mode ? 'test_' : '';
 		$this->key_id             = $this->get_option( $setting_prefix . 'key_id' );
@@ -156,6 +156,21 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		if ( ! $this->is_valid_for_use() ) {
 			$this->enabled = 'no';
 		}
+	}
+
+	/**
+	 * Get the API type stored for this installation.
+	 *
+	 * @return string
+	 */
+	private function get_saved_api_type() {
+		$settings = get_option( 'woocommerce_wc-razorpay_settings', [] );
+
+		if ( ! isset( $settings['api_type'] ) ) {
+			return 'standard';
+		}
+
+		return 'standard' === $settings['api_type'] ? 'standard' : 'legacy';
 	}
 	
 	/**
@@ -419,6 +434,10 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 				'desc_tip'    => false,
 			],
 		];
+
+		if ( 'legacy' !== $this->get_saved_api_type() ) {
+			unset( $this->form_fields['api_type'] );
+		}
 	}
 		
 	/*

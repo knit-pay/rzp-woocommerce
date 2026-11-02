@@ -99,7 +99,7 @@ It needs custom development. Please contact us at https://www.knitpay.org/contac
 
 = Which Razorpay API Type should I select? =
 
-Select 'Standard API' (Payment Links API) if your Razorpay account was created on or after 1 September, 2020 - it is the recommended option. 'Legacy API' (Invoices API) is kept only for very old accounts where the standard API does not work.
+Select 'Standard API' (Payment Links API) - it is the only option for new installations and the recommended option for all accounts. 'Legacy API' (Invoices API) is shown only for existing installations that already use it; switching to Standard API removes the legacy option.
 
 = Does this plugin support partial payments? =
 
@@ -148,6 +148,7 @@ Release Date: Nov 2, 2026
 * Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.
 * Improvement: The Razorpay webhook is now also subscribed to the "payment_link.paid" event, to support payment verification improvements in upcoming releases.
 * Improvement: The webhook secret is generated automatically when the secret field is left empty.
+* Improvement: The Legacy API option is now shown only to existing installations that already use it; new installations use the Standard API.
 
 = 2.3.1 =
 Release Date: Oct 23, 2026

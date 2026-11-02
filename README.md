@@ -103,7 +103,7 @@ It needs custom development. Please contact us at https://www.knitpay.org/contac
 
 #### Which Razorpay API Type should I select?
 
-Select 'Standard API' (Payment Links API) if your Razorpay account was created on or after 1 September, 2020 - it is the recommended option. 'Legacy API' (Invoices API) is kept only for very old accounts where the standard API does not work.
+Select 'Standard API' (Payment Links API) - it is the only option for new installations and the recommended option for all accounts. 'Legacy API' (Invoices API) is shown only for existing installations that already use it; switching to Standard API removes the legacy option.
 
 #### Is this plugin compatible with any themes?
 

@@ -8,6 +8,7 @@ Release Date: Nov 2, 2026
 * Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.
 * Improvement: The Razorpay webhook is now also subscribed to the "payment_link.paid" event, to support payment verification improvements in upcoming releases.
 * Improvement: The webhook secret is generated automatically when the secret field is left empty.
+* Improvement: The Legacy API option is now shown only to existing installations that already use it; new installations use the Standard API.
 
 ## 2.3.1
 Release Date: Oct 23, 2026

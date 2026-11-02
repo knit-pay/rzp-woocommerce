@@ -1275,8 +1275,6 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 		if ( empty( $this->access_token ) ) {
 			$auth = 'Basic ' . base64_encode( $this->key_id . ':' . $this->key_secret );
 		} else {
-			$access_token = $this->access_token;
-
 			// Refresh Access Token if already expired.
 			if ( time() >= $this->expires_at ) {
 				$mode           = 'yes' === $this->get_option( 'testmode' ) ? 'test' : 'live';
@@ -1284,10 +1282,12 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 				$this->refresh_access_token( $mode );
 				$this->init_settings();
-				$access_token = $this->get_option( $setting_prefix . 'access_token' );
+
+				$this->access_token = $this->get_option( $setting_prefix . 'access_token' );
+				$this->expires_at   = (int) $this->get_option( $setting_prefix . 'expires_at' );
 			}
 
-			$auth = 'Bearer ' . $access_token;
+			$auth = 'Bearer ' . $this->access_token;
 		}
 		
 		if ( ! is_null( $data ) && is_array( $data ) ) {
@@ -1322,6 +1322,8 @@ class RZP_WC_Payment_Gateway extends \WC_Payment_Gateway {
 
 			// retry only when a fresh token was actually obtained
 			if ( '' !== $new_token && $new_token !== $old_token ) {
+				$this->access_token = $new_token;
+				$this->expires_at   = (int) $this->get_option( $setting_prefix . 'expires_at' );
 				$request_args['headers']['Authorization'] = 'Bearer ' . $new_token;
 
 				$response = wp_remote_request( $api_endpoint, $request_args );

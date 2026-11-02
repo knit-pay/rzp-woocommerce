@@ -142,7 +142,7 @@ New: Razorpay Affordability Widget on product pages and a redesigned connection 
 If you like Razorpay Payment Links for WooCommerce, please take a moment to [give a 5-star rating](https://wordpress.org/support/plugin/rzp-woocommerce/reviews/?rate=5#new-post). It helps to keep development and support going strong. Thank you!
 
 = 2.4.0 =
-Release Date: Nov 2, 2026
+Release Date: Nov 3, 2026
 
 * Fix: Stale payment links are now invalidated when an unpaid order's amount changes, and the payment link amount is verified when a payment is received - payments made through an outdated link are not processed automatically and are left for manual review.
 * Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.

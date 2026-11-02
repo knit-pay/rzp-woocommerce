@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## 2.4.0
-Release Date: Nov 2, 2026
+Release Date: Nov 3, 2026
 
 * Fix: Stale payment links are now invalidated when an unpaid order's amount changes, and the payment link amount is verified when a payment is received - payments made through an outdated link are not processed automatically and are left for manual review.
 * Improvement: Increased the API request timeout and added automatic access-token refresh with retry on authentication failures, for better compatibility with slow servers.
